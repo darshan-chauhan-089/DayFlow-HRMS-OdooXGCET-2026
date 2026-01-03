@@ -42,7 +42,7 @@ const Signup = () => {
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
+
     return minLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
   };
 
@@ -85,7 +85,7 @@ const Signup = () => {
         toast.success('Account created successfully!');
         toast.success('Login credentials sent to your email!', { duration: 5000 });
         if (result.user && result.user.empId) {
-           toast.success(`Your Login ID is: ${result.user.empId}`, { duration: 6000 });
+          toast.success(`Your Login ID is: ${result.user.empId}`, { duration: 6000 });
         }
         setTimeout(() => navigate('/login'), 2500);
       } else {
@@ -103,10 +103,10 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4" style={{ backgroundColor: 'var(--bg-main)' }}>
-      
+
       {/* Authentication Card */}
       <div className="w-full max-w-[500px] odoo-card p-8 bg-white">
-        
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
@@ -149,9 +149,9 @@ const Signup = () => {
           {/* Upload Logo */}
           <div>
             <label className="odoo-label">COMPANY LOGO</label>
-            <label 
-              htmlFor="logo-upload" 
-              className="w-full flex flex-col justify-center items-center px-4 py-6 border-2 border-dashed rounded cursor-pointer transition-colors" 
+            <label
+              htmlFor="logo-upload"
+              className="w-full flex flex-col justify-center items-center px-4 py-6 border-2 border-dashed rounded cursor-pointer transition-colors"
               style={{ borderColor: 'var(--border-color)', backgroundColor: '#F8F9FA' }}
             >
               {logo ? (
@@ -233,7 +233,7 @@ const Signup = () => {
           <div>
             <label htmlFor="password" className="odoo-label">PASSWORD</label>
             <div className="relative">
-              <label htmlFor="password" class="sr-only">Password</label>
+              <label htmlFor="password" className="sr-only">Password</label>
               <input
                 id="password"
                 name="password"
@@ -252,13 +252,13 @@ const Signup = () => {
                 {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
               </button>
             </div>
-            
+
             {/* Password Strength Indicator */}
             {formData.password && (
               <div className="flex justify-between items-center mt-2">
                 <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Password Strength</span>
-                <span 
-                  className="text-xs font-bold uppercase" 
+                <span
+                  className="text-xs font-bold uppercase"
                   style={{ color: validatePassword(formData.password) ? 'var(--odoo-teal)' : '#DC3545' }}
                 >
                   {validatePassword(formData.password) ? 'Strong' : 'Weak'}
@@ -271,7 +271,7 @@ const Signup = () => {
           <div>
             <label htmlFor="confirmPassword" className="odoo-label">CONFIRM PASSWORD</label>
             <div className="relative">
-              <label htmlFor="confirmPassword" class="sr-only">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"

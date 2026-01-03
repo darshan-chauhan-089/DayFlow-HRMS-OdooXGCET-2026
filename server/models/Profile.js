@@ -1,13 +1,20 @@
 import pool from '../config/db.js';
 
+const formatDateForDB = (dateString) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return null;
+  return date.toISOString().split('T')[0];
+};
+
 export const upsertProfile = async (userId, profileData) => {
-  const { 
-    address = null, 
-    phone = null, 
-    jobTitle = null, 
-    department = null, 
-    salaryBase = null, 
-    dateOfBirth = null, 
+  const {
+    address = null,
+    phone = null,
+    jobTitle = null,
+    department = null,
+    salaryBase = null,
+    dateOfBirth = null,
     joiningDate = null,
     nationality = null,
     personalEmail = null,
@@ -22,12 +29,19 @@ export const upsertProfile = async (userId, profileData) => {
     whatILoveAboutMyJob = null,
     interestsAndHobbies = null,
     skills = [],
-    certifications = []
+    certifications = [],
+    workingDays = null,
+    breakTime = null,
+    manager = null,
+    workLocation = null
   } = profileData;
+
+  const formattedDateOfBirth = formatDateForDB(dateOfBirth);
+  const formattedJoiningDate = formatDateForDB(joiningDate);
 
   const skillsStr = Array.isArray(skills) ? JSON.stringify(skills) : skills;
   const certificationsStr = Array.isArray(certifications) ? JSON.stringify(certifications) : certifications;
-  
+
   // Check if profile exists
   const [existing] = await pool.execute('SELECT id FROM profiles WHERE user_id = ?', [userId]);
 
@@ -38,13 +52,15 @@ export const upsertProfile = async (userId, profileData) => {
        SET address = ?, phone = ?, job_title = ?, department = ?, salary_base = ?, date_of_birth = ?, joining_date = ?,
            nationality = ?, personal_email = ?, gender = ?, marital_status = ?, 
            bank_account_no = ?, bank_name = ?, ifsc_code = ?, pan_no = ?, uan_no = ?,
-           about = ?, what_i_love_about_my_job = ?, interests_and_hobbies = ?, skills = ?, certifications = ?
+           about = ?, what_i_love_about_my_job = ?, interests_and_hobbies = ?, skills = ?, certifications = ?,
+           working_days = ?, break_time = ?, manager = ?, work_location = ?
        WHERE user_id = ?`,
-      [address, phone, jobTitle, department, salaryBase, dateOfBirth, joiningDate, 
-       nationality, personalEmail, gender, maritalStatus, 
-       bankAccountNo, bankName, ifscCode, panNo, uanNo,
-       about, whatILoveAboutMyJob, interestsAndHobbies, skillsStr, certificationsStr,
-       userId]
+      [address, phone, jobTitle, department, salaryBase, formattedDateOfBirth, formattedJoiningDate,
+        nationality, personalEmail, gender, maritalStatus,
+        bankAccountNo, bankName, ifscCode, panNo, uanNo,
+        about, whatILoveAboutMyJob, interestsAndHobbies, skillsStr, certificationsStr,
+        workingDays, breakTime, manager, workLocation,
+        userId]
     );
     return { id: existing[0].id, userId, ...profileData };
   } else {
@@ -53,12 +69,12 @@ export const upsertProfile = async (userId, profileData) => {
       `INSERT INTO profiles (user_id, address, phone, job_title, department, salary_base, date_of_birth, joining_date,
            nationality, personal_email, gender, marital_status, 
            bank_account_no, bank_name, ifsc_code, pan_no, uan_no,
-           about, what_i_love_about_my_job, interests_and_hobbies, skills, certifications)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, address, phone, jobTitle, department, salaryBase, dateOfBirth, joiningDate,
-       nationality, personalEmail, gender, maritalStatus, 
-       bankAccountNo, bankName, ifscCode, panNo, uanNo,
-       about, whatILoveAboutMyJob, interestsAndHobbies, skillsStr, certificationsStr]
+           about, what_i_love_about_my_job, interests_and_hobbies, skills, certifications, working_days, break_time, manager, work_location)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, address, phone, jobTitle, department, salaryBase, formattedDateOfBirth, formattedJoiningDate,
+        nationality, personalEmail, gender, maritalStatus,
+        bankAccountNo, bankName, ifscCode, panNo, uanNo,
+        about, whatILoveAboutMyJob, interestsAndHobbies, skillsStr, certificationsStr, workingDays, breakTime, manager, workLocation]
     );
     return { id: result.insertId, userId, ...profileData };
   }

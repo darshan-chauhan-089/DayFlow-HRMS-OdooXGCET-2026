@@ -1,21 +1,18 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { 
-  updateProfile, 
+import {
+  updateProfile,
   getUserProfile,
   updateAvatar,
-  addEmployee, 
-  checkIn, 
+  addEmployee,
+  checkIn,
   checkOut,
   recordAttendanceBreak,
   getAttendanceHistory,
   getTodayStatus,
-<<<<<<< Updated upstream
   getAllEmployees,
   uploadFile,
-=======
->>>>>>> Stashed changes
   getCurrentMonthAttendance,
   getTodayAllEmployeesAttendance
 } from '../controllers/hrController.js';

@@ -12,12 +12,12 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import Attendance from './pages/Attendance'
 import Leave from './pages/Leave'
-import Payroll from './pages/Payroll'
+
 
 const MainLayout = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
-  
+
   // Public routes that don't need the app shell
   const publicRoutes = ['/', '/login', '/signup', '/forgot-password', '/reset-password'];
   const isPublic = publicRoutes.includes(location.pathname) || location.pathname.startsWith('/reset-password/');
@@ -70,7 +70,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
-            
+
             {/* Protected Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
@@ -97,11 +97,7 @@ function App() {
                 <Leave />
               </ProtectedRoute>
             } />
-            <Route path="/payroll" element={
-              <ProtectedRoute>
-                <Payroll />
-              </ProtectedRoute>
-            } />
+
           </Routes>
         </MainLayout>
       </Router>

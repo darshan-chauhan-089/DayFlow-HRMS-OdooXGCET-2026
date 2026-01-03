@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlane, FaUserCircle } from 'react-icons/fa';
+import { FaPlane, FaUserCircle, FaSearch, FaUsers } from 'react-icons/fa';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AddEmployee from './AddEmployee';
@@ -18,25 +18,33 @@ const StatusIndicator = ({ status }) => {
   }
 };
 
-const EmployeeCard = ({ employee, onClick }) => (
-  <div 
-    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
-    onClick={() => onClick(employee.id)}
-  >
-    <div className="flex justify-between items-start">
-      {employee.avatar ? (
-        <img src={employee.avatar} alt={employee.name} className="w-16 h-16 rounded-full object-cover" />
-      ) : (
-        <FaUserCircle size={64} className="text-gray-400" />
-      )}
-      <StatusIndicator status={employee.attendance_status} />
+const EmployeeCard = ({ employee, onClick }) => {
+  const getAvatarUrl = (avatarPath) => {
+    if (!avatarPath) return null;
+    if (avatarPath.startsWith('http')) return avatarPath;
+    return `http://localhost:5000${avatarPath}`;
+  };
+
+  return (
+    <div
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
+      onClick={() => onClick(employee.id)}
+    >
+      <div className="flex justify-between items-start">
+        {employee.avatar ? (
+          <img src={getAvatarUrl(employee.avatar)} alt={employee.name} className="w-16 h-16 rounded-full object-cover" />
+        ) : (
+          <FaUserCircle size={64} className="text-gray-400" />
+        )}
+        <StatusIndicator status={employee.attendance_status} />
+      </div>
+      <div className="mt-4">
+        <h3 className="font-bold text-gray-800">{employee.name}</h3>
+        <p className="text-sm text-gray-500">{employee.job_title || 'Employee'}</p>
+      </div>
     </div>
-    <div className="mt-4">
-      <h3 className="font-bold text-gray-800">{employee.name}</h3>
-      <p className="text-sm text-gray-500">{employee.job_title || 'Employee'}</p>
-    </div>
-  </div>
-);
+  );
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -75,41 +83,68 @@ const Dashboard = () => {
     setEmployees([newEmployee, ...employees]);
   };
 
-  const filteredEmployees = employees.filter(emp => 
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(emp =>
+    (emp.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
         <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400 group-focus-within:text-[#00A09D] transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search employees..."
+              className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A09D]/20 focus:border-[#00A09D] w-64 transition-all duration-200 bg-gray-50 focus:bg-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {isAdminOrHR && (
-            <button 
+            <button
               onClick={() => setShowAddEmployee(true)}
-              className="bg-[#00A09D] text-white px-6 py-2 rounded-md hover:bg-[#008c8a] transition-colors"
+              className="bg-[#00A09D] text-white px-6 py-2.5 rounded-xl hover:bg-[#008c8a] transition-all shadow-sm hover:shadow-md font-medium flex items-center gap-2"
             >
-              + NEW
+              <span>+</span> NEW
             </button>
           )}
-          <input
-            type="text"
-            placeholder="Search..."
-            className="px-4 py-2 border rounded-md"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
       </div>
 
       {loading && <p>Loading employees...</p>}
       {error && <p className="text-red-500">{error}</p>}
-      
-      {!loading && !error && (
+
+      {!loading && !error && filteredEmployees.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredEmployees.map(employee => (
             <EmployeeCard key={employee.id} employee={employee} onClick={handleCardClick} />
           ))}
+        </div>
+      )}
+
+      {!loading && !error && filteredEmployees.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="bg-gray-50 p-6 rounded-full mb-4">
+            <FaUsers size={48} className="text-gray-300" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">No employees found</h3>
+          <p className="text-gray-500 max-w-sm mx-auto">
+            {searchTerm
+              ? `We couldn't find any employees matching "${searchTerm}". Try a different search term.`
+              : "There are no employees in the database yet. Click the 'NEW' button to add your first employee."}
+          </p>
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="mt-6 text-[#00A09D] font-medium hover:underline"
+            >
+              Clear search
+            </button>
+          )}
         </div>
       )}
 

@@ -1,20 +1,15 @@
-<<<<<<< Updated upstream
 import { upsertProfile, getProfileByUserId, updateProfileAvatar } from '../models/Profile.js';
 import { getAllUsersWithStatus, createUser, findByEmail, countUsersByYear } from '../models/User.js';
-=======
-import { upsertProfile, getProfileByUserId } from '../models/Profile.js';
->>>>>>> Stashed changes
-import { 
-  createCheckIn, 
-  updateCheckOut, 
+import {
+  createCheckIn,
+  updateCheckOut,
   recordBreak,
-  findAttendanceByUserId, 
+  findAttendanceByUserId,
   findAttendanceByUserAndMonth,
   getTodayAttendance,
   getAllTodayAttendance,
   getMonthlyStats
 } from '../models/Attendance.js';
-<<<<<<< Updated upstream
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../config/email.js';
 import { welcomeEmailTemplate } from '../utils/emailTemplates.js';
@@ -42,8 +37,6 @@ const generateRandomPassword = () => {
   }
   return password;
 };
-=======
->>>>>>> Stashed changes
 
 // @desc    Update user profile
 // @route   PUT /api/hr/profile/:id
@@ -111,7 +104,7 @@ export const getUserProfile = async (req, res) => {
 export const updateAvatar = async (req, res) => {
   try {
     const userId = req.params.id;
-    
+
     // Allow users to update their own avatar, or Admins/HR to update anyone
     if (req.user.id != userId && req.user.role !== 'Admin' && req.user.role !== 'HR') {
       return res.status(403).json({
@@ -203,7 +196,7 @@ export const checkOut = async (req, res) => {
 export const getAttendanceHistory = async (req, res) => {
   try {
     const userId = req.params.id;
-    
+
     // Authorization check
     if (req.user.id != userId && req.user.role !== 'Admin' && req.user.role !== 'HR') {
       return res.status(403).json({
@@ -235,8 +228,8 @@ export const getAttendanceHistory = async (req, res) => {
 export const getTodayStatus = async (req, res) => {
   try {
     const userId = req.user.id;
-    const date = new Date().toLocaleDateString('en-CA');
-    
+    const date = new Date().toISOString().split('T')[0];
+
     const record = await getTodayAttendance(userId, date);
 
     res.status(200).json({
@@ -252,162 +245,6 @@ export const getTodayStatus = async (req, res) => {
   }
 };
 
-<<<<<<< Updated upstream
-// @desc    Get all employees with their status
-// @route   GET /api/hr/employees
-// @access  Private (All authenticated users)
-export const getAllEmployees = async (req, res) => {
-  try {
-    // Allow all authenticated users to view employee list
-    const employees = await getAllUsersWithStatus();
-
-    res.status(200).json({
-      success: true,
-      data: employees,
-    });
-  } catch (error) {
-    console.error('Get all employees error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Add new employee (Admin/HR only)
-// @route   POST /api/hr/employees/add
-// @access  Private (Admin/HR)
-export const addEmployee = async (req, res) => {
-  try {
-    // Check if user is Admin or HR
-    if (req.user.role !== 'Admin' && req.user.role !== 'HR') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to add employees',
-      });
-    }
-
-    const { 
-      name, 
-      email, 
-      password, 
-      phone, 
-      department, 
-      jobTitle, 
-      salaryBase, 
-      joiningDate 
-    } = req.body;
-
-    // Validation
-    if (!name || !email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name and email are required',
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await findByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this email already exists',
-      });
-    }
-
-    // Get admin's company info
-    const adminUser = req.user;
-    const companyName = adminUser.companyName || 'Company';
-    
-    // Generate Login ID
-    const empId = await generateLoginId(companyName, name);
-
-    // Generate or use provided password
-    const plainPassword = password || generateRandomPassword();
-    const passwordHash = await bcrypt.hash(plainPassword, 10);
-
-    // Create user
-    const newUser = await createUser({
-      empId,
-      name,
-      companyName,
-      companyLogo: adminUser.companyLogo || null,
-      email,
-      passwordHash,
-      role: 'Employee',
-    });
-
-    // Create profile with additional info
-    await upsertProfile(newUser.id, {
-      phone: phone || null,
-      department: department || null,
-      jobTitle: jobTitle || null,
-      salaryBase: salaryBase || null,
-      joiningDate: joiningDate || new Date().toISOString().split('T')[0],
-    });
-
-    // Send welcome email with credentials
-    try {
-      await sendEmail({
-        to: email,
-        subject: `Welcome to ${companyName} - Your Account Details`,
-        html: welcomeEmailTemplate(name, empId, email, plainPassword, companyName),
-      });
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-      // Don't fail the employee creation if email fails
-    }
-
-    // Get full profile data
-    const employeeProfile = await getProfileByUserId(newUser.id);
-
-    res.status(201).json({
-      success: true,
-      message: 'Employee added successfully',
-      data: employeeProfile,
-    });
-  } catch (error) {
-    console.error('Add employee error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while adding employee',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Upload a file
-// @route   POST /api/hr/upload
-// @access  Private
-export const uploadFile = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'No file provided',
-      });
-    }
-
-    const filePath = `/uploads/${req.file.filename}`;
-
-    res.status(200).json({
-      success: true,
-      message: 'File uploaded successfully',
-      data: { filePath },
-    });
-  } catch (error) {
-    console.error('Upload file error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while uploading file',
-      error: error.message,
-    });
-  }
-};
-
-=======
->>>>>>> Stashed changes
 // @desc    Record break time
 // @route   POST /api/hr/attendance/break
 // @access  Private
@@ -415,11 +252,7 @@ export const recordAttendanceBreak = async (req, res) => {
   try {
     const userId = req.user.id;
     const { breakStart, breakEnd } = req.body;
-<<<<<<< Updated upstream
-    const date = new Date().toLocaleDateString('en-CA');
-=======
     const date = new Date().toISOString().split('T')[0];
->>>>>>> Stashed changes
 
     if (!breakStart || !breakEnd) {
       return res.status(400).json({
@@ -493,11 +326,7 @@ export const getTodayAllEmployeesAttendance = async (req, res) => {
       });
     }
 
-<<<<<<< Updated upstream
     const date = new Date().toLocaleDateString('en-CA');
-=======
-    const date = new Date().toISOString().split('T')[0];
->>>>>>> Stashed changes
     const records = await getAllTodayAttendance(date);
 
     res.status(200).json({
@@ -511,6 +340,165 @@ export const getTodayAllEmployeesAttendance = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching attendance',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Add new employee
+// @route   POST /api/hr/employees/add
+// @access  Private (Admin/HR)
+export const addEmployee = async (req, res) => {
+  try {
+    // Check authorization
+    if (req.user.role !== 'Admin' && req.user.role !== 'HR') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to add employees',
+      });
+    }
+
+    const {
+      firstName, lastName, name,
+      email, role,
+      department,
+      designation, jobTitle,
+      joiningDate,
+      salary, salaryBase,
+      phone
+    } = req.body;
+
+    // Check if user exists
+    const userExists = await findByEmail(email);
+    if (userExists) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Generate credentials
+    let fullName = name;
+    if (!fullName && (firstName || lastName)) {
+      fullName = `${firstName || ''} ${lastName || ''}`.trim();
+    }
+
+    if (!fullName) {
+      return res.status(400).json({ success: false, message: 'Name is required' });
+    }
+
+    const companyName = req.user.companyName || 'GCET';
+    const loginId = await generateLoginId(companyName, fullName);
+    const password = generateRandomPassword();
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const newUser = await createUser({
+      empId: loginId,
+      name: fullName,
+      companyName: companyName,
+      companyLogo: req.user.companyLogo || null,
+      email,
+      passwordHash: hashedPassword,
+      role: role || 'Employee'
+    });
+
+    // Create profile
+    await upsertProfile(newUser.id, {
+      jobTitle: jobTitle || designation,
+      department,
+      joiningDate,
+      salaryBase: salaryBase || salary,
+      phone
+    });
+
+    // Send welcome email
+    try {
+      const emailContent = welcomeEmailTemplate(fullName, loginId, password, 'http://localhost:5173/login');
+      await sendEmail(email, 'Welcome to DayFlow HRMS', emailContent);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // Continue even if email fails
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Employee added successfully',
+      data: {
+        id: newUser.id,
+        loginId,
+        email,
+        role: newUser.role
+      }
+    });
+  } catch (error) {
+    console.error('Add employee error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while adding employee',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get all employees
+// @route   GET /api/hr/employees
+// @access  Private (Admin/HR/Employee)
+export const getAllEmployees = async (req, res) => {
+  try {
+    // Allow all authenticated users to view employees
+    // if (req.user.role !== 'Admin' && req.user.role !== 'HR') {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'Not authorized to view employees',
+    //   });
+    // }
+
+    const employees = await getAllUsersWithStatus();
+
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      data: employees,
+    });
+  } catch (error) {
+    console.error('Get all employees error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching employees',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Upload file
+// @route   POST /api/hr/upload
+// @access  Private
+export const uploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'File uploaded successfully',
+      data: {
+        filename: req.file.filename,
+        path: `/uploads/${req.file.filename}`,
+      },
+    });
+  } catch (error) {
+    console.error('Upload file error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while uploading file',
       error: error.message,
     });
   }

@@ -24,7 +24,7 @@ export const updateCheckOut = async (userId, date, time) => {
     `SELECT check_in FROM attendance WHERE user_id = ? AND date = ?`,
     [userId, date]
   );
-  
+
   if (records.length === 0) {
     throw new Error('No check-in record found for today');
   }
@@ -33,7 +33,7 @@ export const updateCheckOut = async (userId, date, time) => {
   const checkInTime = new Date(`2000-01-01 ${records[0].check_in}`);
   const checkOutTime = new Date(`2000-01-01 ${time}`);
   const totalMinutes = (checkOutTime - checkInTime) / (1000 * 60);
-  
+
   const [breakData] = await pool.execute(
     `SELECT break_duration_minutes FROM attendance WHERE user_id = ? AND date = ?`,
     [userId, date]
@@ -45,9 +45,9 @@ export const updateCheckOut = async (userId, date, time) => {
 
   // Determine status based on working hours
   let status = 'Present';
-  if (workingHours < 4) {
+  if (workingHours < 0.01) {
     status = 'Absent';
-  } else if (workingHours < 7.5) {
+  } else if (workingHours < 4) {
     status = 'Half Day';
   }
 
@@ -55,7 +55,7 @@ export const updateCheckOut = async (userId, date, time) => {
     `UPDATE attendance SET check_out = ?, working_hours = ?, status = ?, updated_at = NOW() WHERE user_id = ? AND date = ?`,
     [time, workingHours, status, userId, date]
   );
-  
+
   if (result.affectedRows === 0) {
     throw new Error('No check-in record found for today');
   }
@@ -67,15 +67,24 @@ export const recordBreak = async (userId, date, breakStart, breakEnd) => {
   const breakEndTime = new Date(`2000-01-01 ${breakEnd}`);
   const breakDurationMinutes = Math.max(0, (breakEndTime - breakStartTime) / (1000 * 60));
 
+  // Get existing break duration to accumulate
+  const [existing] = await pool.execute(
+    `SELECT break_duration_minutes FROM attendance WHERE user_id = ? AND date = ?`,
+    [userId, date]
+  );
+
+  const currentDuration = existing[0]?.break_duration_minutes || 0;
+  const newDuration = currentDuration + Math.round(breakDurationMinutes);
+
   const [result] = await pool.execute(
     `UPDATE attendance SET break_start = ?, break_end = ?, break_duration_minutes = ?, updated_at = NOW() WHERE user_id = ? AND date = ?`,
-    [breakStart, breakEnd, Math.round(breakDurationMinutes), userId, date]
+    [breakStart, breakEnd, newDuration, userId, date]
   );
-  
+
   if (result.affectedRows === 0) {
     throw new Error('No attendance record found for today');
   }
-  
+
   return true;
 };
 

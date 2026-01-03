@@ -28,7 +28,7 @@ const generateLoginId = async (companyName, fullName) => {
   const names = fullName.trim().split(' ');
   const firstName = names[0] || '';
   const lastName = names.length > 1 ? names[names.length - 1] : firstName; // Fallback if no last name
-  
+
   const nameCode = (firstName.substring(0, 2) + lastName.substring(0, 2)).toUpperCase();
 
   // 3. Year
@@ -132,7 +132,7 @@ export const signup = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
     // Validation
     if (!email || !password) {
@@ -141,6 +141,10 @@ export const login = async (req, res) => {
         message: 'Please provide email/login ID and password',
       });
     }
+
+    // Trim inputs
+    email = email.trim();
+    password = password.trim();
 
     // Find user and include password hash
     const user = await findByEmailOrEmpId(email);
@@ -193,6 +197,60 @@ export const login = async (req, res) => {
 
 
 
+// @desc    Change password
+// @route   POST /api/auth/change-password
+// @access  Private
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current and new password',
+      });
+    }
+
+    // Find user to verify current password
+    const user = await findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Incorrect current password',
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    await updatePassword(userId, hashedPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while changing password',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Get user profile
 // @route   GET /api/auth/profile
 // @access  Private
@@ -212,8 +270,12 @@ export const getProfile = async (req, res) => {
       success: true,
       user: {
         id: user.id,
+        empId: user.empId,
         name: user.name,
         email: user.email,
+        role: user.role,
+        companyName: user.companyName,
+        companyLogo: user.companyLogo,
         createdAt: user.createdAt,
       },
     });

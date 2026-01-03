@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/api';
-import { FaKey, FaEnvelope, FaLock, FaCheckCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaKey, FaEnvelope, FaLock, FaCheckCircle, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
 import PasswordCriteria from '../components/PasswordCriteria';
 
 const ForgotPassword = () => {
@@ -155,266 +155,219 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="flex justify-center mb-6">
-                    <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300">
-                        <FaKey className="text-3xl text-white" />
+        <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4" style={{ backgroundColor: 'var(--bg-main)' }}>
+            
+            {/* Authentication Card */}
+            <div className="w-full max-w-[400px] odoo-card p-8 bg-white">
+                
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center gap-2 mb-2">
+                        <img src="/logo.jpeg" alt="DayFlow" className="w-8 h-8 object-contain" />
+                        <span className="text-xl font-bold" style={{ color: 'var(--text-main)' }}>DayFlow</span>
                     </div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        {step === 1 && 'Reset your password'}
+                        {step === 2 && 'Verify OTP'}
+                        {step === 3 && 'Create new password'}
+                    </p>
                 </div>
-                <h2 className="mt-6 text-center text-4xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-                    {step === 1 && 'Forgot Password?'}
-                    {step === 2 && 'Verify OTP'}
-                    {step === 3 && 'Reset Password'}
-                </h2>
-                <p className="mt-3 text-center text-base text-gray-600">
-                    {step === 1 && 'Enter your email to receive a verification code'}
-                    {step === 2 && 'Enter the 6-digit code sent to your email'}
-                    {step === 3 && 'Create a new strong password'}
-                </p>
-            </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-10 px-6 shadow-2xl rounded-2xl sm:px-12 border border-gray-100">
-                    {success ? (
-                        <div className="text-center">
-                            <div className="mb-6 flex justify-center">
-                                <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
-                                    <FaCheckCircle className="text-4xl text-green-600" />
-                                </div>
+                {success ? (
+                    <div className="text-center">
+                        <div className="mb-6 flex justify-center">
+                            <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+                                <FaCheckCircle className="text-3xl text-green-600" />
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                                Password Reset Successful!
-                            </h3>
-                            <p className="text-gray-600 mb-6">
-                                Your password has been reset. Redirecting to login...
-                            </p>
-                            <Link
-                                to="/login"
-                                className="inline-block bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl text-base font-bold transition-all duration-300 shadow-lg transform hover:scale-105"
-                            >
-                                Go to Login
-                            </Link>
                         </div>
-                    ) : (
-                        <>
-                            {error && (
-                                <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg">
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* Step 1: Email Input */}
-                            {step === 1 && (
-                                <form onSubmit={handleEmailSubmit} className="space-y-6">
-                                    <div>
-                                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaEnvelope className="text-primary-600" />
-                                            Email Address
-                                        </label>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            Password Reset Successful!
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Your password has been reset. Redirecting to login...
+                        </p>
+                        <Link
+                            to="/login"
+                            className="odoo-btn-primary block w-full text-center no-underline"
+                        >
+                            Go to Login
+                        </Link>
+                    </div>
+                ) : (
+                    <>
+                        {/* Step 1: Email Input */}
+                        {step === 1 && (
+                            <form onSubmit={handleEmailSubmit} className="space-y-5">
+                                <div>
+                                    <label htmlFor="email" className="odoo-label">EMAIL ADDRESS</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <FaEnvelope className="text-gray-400 text-sm" />
+                                        </div>
                                         <input
                                             id="email"
-                                            name="email"
                                             type="email"
                                             required
+                                            className="odoo-input pl-10"
+                                            placeholder="Enter your email address"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="your.email@example.com"
-                                            className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                                         />
                                     </div>
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        We'll send a 6-digit verification code to this email.
+                                    </p>
+                                </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                Sending OTP...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaKey />
-                                                Send OTP
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <div className="text-center">
-                                        <Link to="/login" className="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors">
-                                            Back to Login
-                                        </Link>
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded" style={{ borderRadius: 'var(--radius-sm)' }}>
+                                        {error}
                                     </div>
-                                </form>
-                            )}
+                                )}
 
-                            {/* Step 2: OTP Verification */}
-                            {step === 2 && (
-                                <form onSubmit={handleOTPSubmit} className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
-                                            Enter 6-Digit Code
-                                        </label>
-                                        <div className="flex justify-center gap-2">
-                                            {otp.map((digit, index) => (
-                                                <input
-                                                    key={index}
-                                                    id={`otp-${index}`}
-                                                    type="text"
-                                                    maxLength={1}
-                                                    value={digit}
-                                                    onChange={(e) => handleOTPChange(index, e.target.value)}
-                                                    onKeyDown={(e) => handleOTPKeyDown(index, e)}
-                                                    className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                                                />
-                                            ))}
-                                        </div>
-                                        <p className="mt-3 text-center text-sm text-gray-600">
-                                            Code sent to {email}
-                                        </p>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="odoo-btn-primary uppercase tracking-wide"
+                                >
+                                    {loading ? 'SENDING OTP...' : 'SEND OTP'}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Step 2: OTP Verification */}
+                        {step === 2 && (
+                            <form onSubmit={handleOTPSubmit} className="space-y-5">
+                                <div>
+                                    <label className="odoo-label text-center mb-4 block">ENTER VERIFICATION CODE</label>
+                                    <div className="flex justify-between gap-2">
+                                        {otp.map((digit, index) => (
+                                            <input
+                                                key={index}
+                                                id={`otp-${index}`}
+                                                type="text"
+                                                maxLength="1"
+                                                className="w-10 h-12 text-center text-xl font-bold border rounded-md focus:ring-2 focus:ring-[#00A09D] focus:border-[#00A09D] outline-none transition-all"
+                                                style={{ borderColor: 'var(--border-color)' }}
+                                                value={digit}
+                                                onChange={(e) => handleOTPChange(index, e.target.value)}
+                                                onKeyDown={(e) => handleOTPKeyDown(index, e)}
+                                            />
+                                        ))}
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                Verifying...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaCheckCircle />
-                                                Verify OTP
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <div className="text-center space-y-2">
+                                    <div className="text-center mt-4">
                                         <button
                                             type="button"
                                             onClick={resendOTP}
                                             disabled={loading}
-                                            className="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors"
+                                            className="text-xs font-medium hover:underline"
+                                            style={{ color: 'var(--odoo-purple)' }}
                                         >
-                                            Resend OTP
+                                            Resend Code
                                         </button>
-                                        <div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setStep(1)}
-                                                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-                                            >
-                                                Change Email
-                                            </button>
-                                        </div>
                                     </div>
-                                </form>
-                            )}
+                                </div>
 
-                            {/* Step 3: New Password */}
-                            {step === 3 && (
-                                <form onSubmit={handlePasswordReset} className="space-y-6">
-                                    <div>
-                                        <label htmlFor="newPassword" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaLock className="text-primary-600" />
-                                            New Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                id="newPassword"
-                                                name="newPassword"
-                                                type={showPassword ? 'text' : 'password'}
-                                                required
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                placeholder="Create a strong password"
-                                                className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-                                            >
-                                                {showPassword ? <FaEyeSlash className="text-xl" /> : <FaEye className="text-xl" />}
-                                            </button>
-                                        </div>
-                                        <PasswordCriteria password={newPassword} />
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded" style={{ borderRadius: 'var(--radius-sm)' }}>
+                                        {error}
                                     </div>
+                                )}
 
-                                    <div>
-                                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <FaCheckCircle className="text-primary-600" />
-                                            Confirm Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                id="confirmPassword"
-                                                name="confirmPassword"
-                                                type={showConfirmPassword ? 'text' : 'password'}
-                                                required
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                placeholder="Re-enter your password"
-                                                className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-                                            >
-                                                {showConfirmPassword ? <FaEyeSlash className="text-xl" /> : <FaEye className="text-xl" />}
-                                            </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="odoo-btn-primary uppercase tracking-wide"
+                                >
+                                    {loading ? 'VERIFYING...' : 'VERIFY OTP'}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Step 3: New Password */}
+                        {step === 3 && (
+                            <form onSubmit={handlePasswordReset} className="space-y-5">
+                                <div>
+                                    <label htmlFor="newPassword" className="odoo-label">NEW PASSWORD</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <FaLock className="text-gray-400 text-sm" />
                                         </div>
-                                        {confirmPassword && newPassword !== confirmPassword && (
-                                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                                                Passwords do not match
-                                            </p>
-                                        )}
-                                        {confirmPassword && newPassword === confirmPassword && (
-                                            <p className="mt-2 text-sm text-green-600 flex items-center gap-1">
-                                                <FaCheckCircle />
-                                                Passwords match
-                                            </p>
-                                        )}
+                                        <input
+                                            id="newPassword"
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            className="odoo-input pl-10 pr-10"
+                                            placeholder="Enter new password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+                                        </button>
                                     </div>
+                                    <PasswordCriteria password={newPassword} />
+                                </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={loading || newPassword !== confirmPassword}
-                                        className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                Resetting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaLock />
-                                                Reset Password
-                                            </>
-                                        )}
-                                    </button>
-                                </form>
-                            )}
-                        </>
-                    )}
-                </div>
+                                <div>
+                                    <label htmlFor="confirmPassword" className="odoo-label">CONFIRM PASSWORD</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <FaLock className="text-gray-400 text-sm" />
+                                        </div>
+                                        <input
+                                            id="confirmPassword"
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            required
+                                            className="odoo-input pl-10 pr-10"
+                                            placeholder="Confirm new password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+                                        </button>
+                                    </div>
+                                </div>
 
-                <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600">
-                        Don't have an account?{' '}
-                        <Link to="/signup" className="font-bold text-primary-600 hover:text-primary-500 transition-colors">
-                            Sign up now
-                        </Link>
-                    </p>
-                </div>
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded" style={{ borderRadius: 'var(--radius-sm)' }}>
+                                        {error}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="odoo-btn-primary uppercase tracking-wide"
+                                >
+                                    {loading ? 'RESETTING...' : 'RESET PASSWORD'}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Back to Login */}
+                        <div className="text-center mt-6">
+                            <Link to="/login" className="inline-flex items-center text-sm font-medium hover:underline" style={{ color: 'var(--text-secondary)' }}>
+                                <FaArrowLeft className="mr-2 text-xs" /> Back to Login
+                            </Link>
+                        </div>
+                    </>
+                )}
             </div>
+
+            {/* Page Footer */}
+            <p className="text-xs text-center mt-8" style={{ color: 'var(--text-muted)' }}>
+                © 2026 DayFlow HRMS. All rights reserved.
+            </p>
         </div>
     );
 };

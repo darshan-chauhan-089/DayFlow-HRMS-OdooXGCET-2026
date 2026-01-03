@@ -42,12 +42,13 @@ api.interceptors.response.use(
 export const authAPI = {
   signup: (userData) => {
     // If userData is FormData, let browser set content-type automatically
-    const config = userData instanceof FormData 
+    const config = userData instanceof FormData
       ? { headers: { 'Content-Type': 'multipart/form-data' } }
       : {};
     return api.post('/auth/signup', userData, config);
   },
   login: (credentials) => api.post('/auth/login', credentials),
+  getProfile: () => api.get('/auth/profile'),
   getProfile: () => api.get('/auth/profile'),
   sendOTP: (email) => api.post('/auth/send-otp', { email }),
   verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp }),

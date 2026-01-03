@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { signup, login, getProfile, forgotPassword, resetPassword, sendOTP, verifyOTP, resetPasswordWithOTP } from '../controllers/authController.js';
+import { signup, login, getProfile, forgotPassword, resetPassword, sendOTP, verifyOTP, resetPasswordWithOTP, changePassword } from '../controllers/authController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -41,5 +41,6 @@ router.post('/reset-password-otp', resetPasswordWithOTP);
 
 // Protected routes
 router.get('/profile', authMiddleware, getProfile);
+router.post('/change-password', authMiddleware, changePassword);
 
 export default router;

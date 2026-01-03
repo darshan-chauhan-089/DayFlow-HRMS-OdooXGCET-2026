@@ -17,24 +17,45 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+
+      if (token) {
+        // Optimistically set user from local storage first
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+
+        try {
+          // Fetch fresh user data from server
+          const response = await authAPI.getProfile();
+          if (response.data.success) {
+            const freshUser = response.data.user;
+            setUser(freshUser);
+            localStorage.setItem('user', JSON.stringify(freshUser));
+            if (freshUser.role) localStorage.setItem('userRole', freshUser.role);
+          }
+        } catch (error) {
+          console.error('Failed to refresh user profile:', error);
+          // If token is invalid, the api interceptor will handle logout
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await authAPI.login({ email, password });
       const { token, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
-      
+
       return { success: true };
     } catch (error) {
       return {
@@ -48,14 +69,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.signup(userData);
       const { token, user } = response.data;
-      
+
       // Enrich local user object with optional client-side fields
       const enrichedUser = { ...user };
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(enrichedUser));
       if (user?.role) localStorage.setItem('userRole', user.role);
       setUser(enrichedUser);
-      
+
       return { success: true, user };
     } catch (error) {
       return {

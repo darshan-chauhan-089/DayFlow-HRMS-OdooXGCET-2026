@@ -67,6 +67,10 @@ const Profile = () => {
           uanNo: data.data.uan_no || data.data.uanNo,
           whatILoveAboutMyJob: data.data.what_i_love_about_my_job || data.data.whatILoveAboutMyJob,
           interestsAndHobbies: data.data.interests_and_hobbies || data.data.interestsAndHobbies,
+          workingDays: data.data.working_days || data.data.workingDays,
+          breakTime: data.data.break_time || data.data.breakTime,
+          manager: data.data.manager,
+          workLocation: data.data.work_location || data.data.workLocation,
         };
 
         setProfileData(mappedData);
@@ -157,9 +161,25 @@ const Profile = () => {
       toast.error("New passwords don't match");
       return;
     }
-    // Implement password update API call here
-    toast.success("Password update functionality to be implemented");
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      toast.error("Please fill in all password fields");
+      return;
+    }
+
+    try {
+      const response = await api.post('/auth/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      if (response.data.success) {
+        toast.success("Password updated successfully");
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update password");
+    }
   };
 
   const addSkill = () => {
@@ -282,11 +302,11 @@ const Profile = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-gray-500">Manager</span>
-                      <span className="text-sm font-medium text-gray-800">N/A</span>
+                      <span className="text-sm font-medium text-gray-800">{profileData.manager || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-gray-500">Location</span>
-                      <span className="text-sm font-medium text-gray-800">{profileData.address ? profileData.address.substring(0, 20) + '...' : 'N/A'}</span>
+                      <span className="text-sm font-medium text-gray-800">{profileData.workLocation || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -303,8 +323,8 @@ const Profile = () => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors capitalize ${activeTab === tab
-                    ? 'border-[#00A09D] text-[#00A09D]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-[#00A09D] text-[#00A09D]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
               >
                 {tab === 'private' ? 'Private Info' : tab === 'salary' ? 'Salary Info' : tab}
@@ -607,74 +627,106 @@ const Profile = () => {
                   </div>
                 </div>
 
-                {/* Bank Details */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Bank Details</h3>
+                {/* Work Information & Bank Details */}
+                <div className="space-y-8">
+                  {/* Work Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Work Information</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
+                        <input
+                          type="text"
+                          name="manager"
+                          value={profileData.manager || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Work Location</label>
+                        <input
+                          type="text"
+                          name="workLocation"
+                          value={profileData.workLocation || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
-                      <input
-                        type="text"
-                        name="bankAccountNo"
-                        value={profileData.bankAccountNo || ''}
-                        onChange={handleInputChange}
-                        disabled={!canEditPrivate}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
-                      <input
-                        type="text"
-                        name="bankName"
-                        value={profileData.bankName || ''}
-                        onChange={handleInputChange}
-                        disabled={!canEditPrivate}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
-                      <input
-                        type="text"
-                        name="ifscCode"
-                        value={profileData.ifscCode || ''}
-                        onChange={handleInputChange}
-                        disabled={!canEditPrivate}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">PAN No</label>
-                      <input
-                        type="text"
-                        name="panNo"
-                        value={profileData.panNo || ''}
-                        onChange={handleInputChange}
-                        disabled={!canEditPrivate}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">UAN NO</label>
-                      <input
-                        type="text"
-                        name="uanNo"
-                        value={profileData.uanNo || ''}
-                        onChange={handleInputChange}
-                        disabled={!canEditPrivate}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Emp Code</label>
-                      <input
-                        type="text"
-                        value={profileData.emp_id || ''}
-                        disabled={true}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                      />
+                  {/* Bank Details */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Bank Details</h3>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                        <input
+                          type="text"
+                          name="bankAccountNo"
+                          value={profileData.bankAccountNo || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                        <input
+                          type="text"
+                          name="bankName"
+                          value={profileData.bankName || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
+                        <input
+                          type="text"
+                          name="ifscCode"
+                          value={profileData.ifscCode || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">PAN No</label>
+                        <input
+                          type="text"
+                          name="panNo"
+                          value={profileData.panNo || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">UAN NO</label>
+                        <input
+                          type="text"
+                          name="uanNo"
+                          value={profileData.uanNo || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Emp Code</label>
+                        <input
+                          type="text"
+                          value={profileData.emp_id || ''}
+                          disabled={true}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -691,43 +743,176 @@ const Profile = () => {
           )}
 
           {activeTab === 'salary' && (
-            <div className="max-w-2xl space-y-6">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Salary & Job Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Salary</label>
-                  <input
-                    type="number"
-                    name="salaryBase"
-                    value={profileData.salaryBase || ''}
-                    onChange={handleInputChange}
-                    disabled={!canEditSalary}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                  />
+            <div className="space-y-8">
+              <div className="flex justify-between items-center border-b pb-4">
+                <h3 className="text-xl font-bold text-gray-800">Salary Info</h3>
+              </div>
+
+              {/* Wage Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <label className="w-32 font-medium text-gray-700">Month Wage</label>
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="number"
+                        name="salaryBase"
+                        value={profileData.salaryBase || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditSalary}
+                        className="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-[#00A09D] outline-none bg-transparent text-lg font-semibold"
+                      />
+                      <span className="text-gray-500">/ Month</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="w-32 font-medium text-gray-700">Yearly wage</label>
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={((parseFloat(profileData.salaryBase) || 0) * 12).toFixed(2)}
+                        disabled
+                        className="w-full px-3 py-2 border-b-2 border-gray-300 bg-transparent text-lg font-semibold text-gray-600"
+                      />
+                      <span className="text-gray-500">/ Yearly</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                  <input
-                    type="text"
-                    name="jobTitle"
-                    value={profileData.jobTitle || ''}
-                    onChange={handleInputChange}
-                    disabled={!canEditSalary}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                  <input
-                    type="text"
-                    name="department"
-                    value={profileData.department || ''}
-                    onChange={handleInputChange}
-                    disabled={!canEditSalary}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
-                  />
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-medium text-gray-700">No of working days in a week:</label>
+                    <input
+                      type="text"
+                      name="workingDays"
+                      value={profileData.workingDays || ''}
+                      onChange={handleInputChange}
+                      disabled={!canEditSalary}
+                      className="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-[#00A09D] outline-none bg-transparent"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="font-medium text-gray-700 w-24">Break Time:</label>
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="text"
+                        name="breakTime"
+                        value={profileData.breakTime || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditSalary}
+                        className="w-full px-3 py-2 border-b-2 border-gray-300 focus:border-[#00A09D] outline-none bg-transparent text-right"
+                      />
+                      <span className="text-gray-500">/ hrs</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                {/* Salary Components */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Salary Components</h4>
+                  <div className="space-y-6">
+                    {(() => {
+                      const wage = parseFloat(profileData.salaryBase) || 0;
+                      const basic = wage * 0.50;
+                      const hra = basic * 0.50;
+                      const stdAllowance = 4167;
+                      const perfBonus = basic * 0.0833;
+                      const lta = basic * 0.0833;
+                      const fixedAllowance = Math.max(0, wage - (basic + hra + stdAllowance + perfBonus + lta));
+
+                      const components = [
+                        { name: 'Basic Salary', amount: basic, percent: '50.00 %', desc: 'Define Basic salary from company cost compute it based on monthly Wages' },
+                        { name: 'House Rent Allowance', amount: hra, percent: '50.00 %', desc: 'HRA provided to employees 50% of the basic salary' },
+                        { name: 'Standard Allowance', amount: stdAllowance, percent: '16.67 %', desc: 'A standard allowance is a predetermined, fixed amount provided to employee as part of their salary' },
+                        { name: 'Performance Bonus', amount: perfBonus, percent: '8.33 %', desc: 'Variable amount paid during payroll. The value defined by the company and calculated as a % of the basic salary' },
+                        { name: 'Leave Travel Allowance', amount: lta, percent: '8.33 %', desc: 'LTA is paid by the company to employees to cover their travel expenses. and calculated as a % of the basic salary' },
+                        { name: 'Fixed Allowance', amount: fixedAllowance, percent: '11.67 %', desc: 'fixed allowance portion of wages is determined after calculating all salary components' },
+                      ];
+
+                      return components.map((comp, idx) => (
+                        <div key={idx} className="space-y-1">
+                          <div className="flex justify-between items-end">
+                            <span className="font-medium text-gray-700 w-1/3">{comp.name}</span>
+                            <div className="flex items-center gap-2 flex-1 justify-center border-b border-gray-300 px-2">
+                              <span className="font-bold text-gray-800">{comp.amount.toFixed(2)}</span>
+                              <span className="text-xs text-gray-500">₹ / month</span>
+                            </div>
+                            <div className="w-20 text-right border-b border-gray-300 px-2">
+                              <span className="font-bold text-gray-800">{comp.percent}</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 italic">{comp.desc}</p>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+
+                {/* PF & Tax */}
+                <div className="space-y-8">
+                  {/* PF Contribution */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Provident Fund (PF) Contribution</h4>
+                    <div className="space-y-6">
+                      {(() => {
+                        const wage = parseFloat(profileData.salaryBase) || 0;
+                        const basic = wage * 0.50;
+                        const pfAmount = basic * 0.12;
+
+                        return (
+                          <>
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-end">
+                                <span className="font-medium text-gray-700 w-1/4">Employee</span>
+                                <div className="flex items-center gap-2 flex-1 justify-center border-b border-gray-300 px-2">
+                                  <span className="font-bold text-gray-800">{pfAmount.toFixed(2)}</span>
+                                  <span className="text-xs text-gray-500">₹ / month</span>
+                                </div>
+                                <div className="w-20 text-right border-b border-gray-300 px-2">
+                                  <span className="font-bold text-gray-800">12.00 %</span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-500 italic">PF is calculated based on the basic salary</p>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-end">
+                                <span className="font-medium text-gray-700 w-1/4">Employe'r</span>
+                                <div className="flex items-center gap-2 flex-1 justify-center border-b border-gray-300 px-2">
+                                  <span className="font-bold text-gray-800">{pfAmount.toFixed(2)}</span>
+                                  <span className="text-xs text-gray-500">₹ / month</span>
+                                </div>
+                                <div className="w-20 text-right border-b border-gray-300 px-2">
+                                  <span className="font-bold text-gray-800">12.00 %</span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-500 italic">PF is calculated based on the basic salary</p>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Tax Deductions */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Tax Deductions</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-end">
+                        <span className="font-medium text-gray-700 w-1/3">Professional Tax</span>
+                        <div className="flex items-center gap-2 flex-1 justify-center border-b border-gray-300 px-2">
+                          <span className="font-bold text-gray-800">200.00</span>
+                          <span className="text-xs text-gray-500">₹ / month</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 italic">Professional Tax deducted from the Gross salary</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {canEditSalary && (
                 <div className="flex justify-end pt-4">
                   <button onClick={saveProfile} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">

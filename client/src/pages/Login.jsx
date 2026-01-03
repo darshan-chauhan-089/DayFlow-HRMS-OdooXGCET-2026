@@ -61,10 +61,10 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4" style={{ backgroundColor: 'var(--bg-main)' }}>
-      
+
       {/* Authentication Card */}
       <div className="w-full max-w-[400px] odoo-card p-8 bg-white">
-        
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">

@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { 
-  FaCalendarCheck, 
-  FaClock, 
-  FaSignInAlt, 
-  FaSignOutAlt, 
-  FaSearch, 
-  FaFilter, 
+import {
+  FaCalendarCheck,
+  FaClock,
+  FaSignInAlt,
+  FaSignOutAlt,
+  FaSearch,
+  FaFilter,
   FaDownload,
   FaPlus,
   FaCoffee
@@ -37,63 +37,50 @@ const Attendance = () => {
   }, []);
 
   // Fetch attendance data
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        setLoading(true);
-        
-        // Get today's record
-        const todayRes = await api.get('/hr/attendance/status/today');
-        if (todayRes.data.success && todayRes.data.data) {
-          setTodayRecord(todayRes.data.data);
-        }
+  const fetchAttendance = useCallback(async (isBackground = false) => {
+    try {
+      if (!isBackground) setLoading(true);
 
-        if (viewMode === 'employee') {
-          // Get current month attendance for employee
-          const monthRes = await api.get('/hr/attendance/month/current');
-          if (monthRes.data.success) {
-            setAttendanceData(monthRes.data.data || []);
-            setStats(monthRes.data.stats || {});
-          }
-        } else if (isAdmin) {
-          // Get all employees attendance for today
-          const adminRes = await api.get('/hr/attendance/all/today');
-          if (adminRes.data.success) {
-            setAdminAttendance(adminRes.data.data || []);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching attendance:', error);
-        if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            console.error('Response data:', error.response.data);
-            console.error('Response status:', error.response.status);
-            console.error('Response headers:', error.response.headers);
-        } else if (error.request) {
-            // The request was made but no response was received
-            console.error('Request:', error.request);
-        } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error('Error message:', error.message);
-        }
-        toast.error('Failed to fetch attendance data');
-      } finally {
-        setLoading(false);
+      // Get today's record
+      const todayRes = await api.get('/hr/attendance/status/today');
+      if (todayRes.data.success && todayRes.data.data) {
+        setTodayRecord(todayRes.data.data);
       }
-    };
 
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 60000); // Refresh every minute
-    return () => clearInterval(interval);
+      if (viewMode === 'employee') {
+        // Get current month attendance for employee
+        const monthRes = await api.get('/hr/attendance/month/current');
+        if (monthRes.data.success) {
+          setAttendanceData(monthRes.data.data || []);
+          setStats(monthRes.data.stats || {});
+        }
+      } else if (isAdmin) {
+        // Get all employees attendance for today
+        const adminRes = await api.get('/hr/attendance/all/today');
+        if (adminRes.data.success) {
+          setAdminAttendance(adminRes.data.data || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      if (!isBackground) toast.error('Failed to fetch attendance data');
+    } finally {
+      if (!isBackground) setLoading(false);
+    }
   }, [viewMode, isAdmin]);
+
+  useEffect(() => {
+    fetchAttendance();
+    const interval = setInterval(() => fetchAttendance(true), 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, [fetchAttendance]);
 
   const handleCheckIn = async () => {
     try {
       const response = await api.post('/hr/attendance/checkin');
       if (response.data.success) {
         toast.success('Checked in successfully');
-        setTodayRecord(response.data.data);
+        fetchAttendance(true);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Check-in failed');
@@ -105,11 +92,7 @@ const Attendance = () => {
       const response = await api.post('/hr/attendance/checkout');
       if (response.data.success) {
         toast.success('Checked out successfully');
-        // Refresh today's record
-        const todayRes = await api.get('/hr/attendance/status/today');
-        if (todayRes.data.success) {
-          setTodayRecord(todayRes.data.data);
-        }
+        fetchAttendance(true);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Check-out failed');
@@ -131,7 +114,7 @@ const Attendance = () => {
     try {
       const breakStartStr = breakStart.toTimeString().split(' ')[0];
       const breakEndStr = new Date().toTimeString().split(' ')[0];
-      
+
       const response = await api.post('/hr/attendance/break', {
         breakStart: breakStartStr,
         breakEnd: breakEndStr,
@@ -141,24 +124,20 @@ const Attendance = () => {
         toast.success('Break recorded successfully');
         setBreakStart(null);
         setShowBreakModal(false);
-        // Refresh today's record
-        const todayRes = await api.get('/hr/attendance/status/today');
-        if (todayRes.data.success) {
-          setTodayRecord(todayRes.data.data);
-        }
+        fetchAttendance(true);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to record break');
     }
   };
 
-  const duration = todayRecord?.check_in && !todayRecord?.check_out 
-    ? Math.max(0, now - new Date(`2000-01-01 ${todayRecord.check_in}`).getTime()) 
+  const duration = todayRecord?.check_in && !todayRecord?.check_out
+    ? Math.max(0, now - new Date(`2000-01-01 ${todayRecord.check_in}`).getTime())
     : 0;
   const durationStr = new Date(duration).toISOString().substring(11, 19);
 
   const getStatusBadge = (status) => {
-    switch(status?.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'present': return 'bg-green-100 text-green-800 border border-green-200';
       case 'half day': return 'bg-orange-100 text-orange-800 border border-orange-200';
       case 'absent': return 'bg-red-100 text-red-800 border border-red-200';
@@ -172,8 +151,8 @@ const Attendance = () => {
     return attendanceData
       .map((record) => ({
         id: record.id,
-        date: new Date(record.date).toLocaleDateString('en-US', { 
-          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+        date: new Date(record.date).toLocaleDateString('en-US', {
+          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
         }),
         checkIn: record.check_in || '-',
         checkOut: record.check_out || '-',
@@ -181,7 +160,7 @@ const Attendance = () => {
         workHours: record.working_hours ? `${record.working_hours} hrs` : '-',
         status: record.status || 'Absent',
       }))
-      .filter(row => 
+      .filter(row =>
         row.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
         row.status.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -200,72 +179,13 @@ const Attendance = () => {
         workHours: record.working_hours ? `${record.working_hours} hrs` : '-',
         status: record.status || 'Absent',
       }))
-      .filter(row => 
+      .filter(row =>
         row.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         row.empId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         row.status.toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [adminAttendance, searchTerm]);
 
-<<<<<<< Updated upstream
-  const handleExport = () => {
-    const dataToExport = viewMode === 'employee' ? employeeRows : adminRows;
-    
-    if (!dataToExport || dataToExport.length === 0) {
-      toast.error('No data to export');
-      return;
-    }
-
-    let headers = [];
-    let csvContent = '';
-
-    if (viewMode === 'employee') {
-      headers = ['Date', 'Check In', 'Check Out', 'Break Duration', 'Working Hours', 'Status'];
-      csvContent = headers.join(',') + '\n';
-      
-      dataToExport.forEach(row => {
-        const line = [
-          `"${row.date}"`,
-          row.checkIn,
-          row.checkOut,
-          row.breakDuration,
-          row.workHours,
-          row.status
-        ].join(',');
-        csvContent += line + '\n';
-      });
-    } else {
-      headers = ['Employee ID', 'Name', 'Department', 'Job Title', 'Check In', 'Check Out', 'Working Hours', 'Status'];
-      csvContent = headers.join(',') + '\n';
-      
-      dataToExport.forEach(row => {
-        const line = [
-          row.empId,
-          `"${row.name}"`,
-          `"${row.department}"`,
-          `"${row.jobTitle}"`,
-          row.checkIn,
-          row.checkOut,
-          row.workHours,
-          row.status
-        ].join(',');
-        csvContent += line + '\n';
-      });
-    }
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `attendance_export_${viewMode}_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-=======
->>>>>>> Stashed changes
   if (loading && viewMode === 'employee') {
     return (
       <div className="flex items-center justify-center h-96">
@@ -281,21 +201,19 @@ const Attendance = () => {
         <div className="flex gap-2 bg-white p-4 rounded-lg border border-gray-200">
           <button
             onClick={() => setViewMode('employee')}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              viewMode === 'employee' 
-                ? 'bg-[#714B67] text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${viewMode === 'employee'
+              ? 'bg-[#714B67] text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
           >
             My Attendance
           </button>
           <button
             onClick={() => setViewMode('admin')}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              viewMode === 'admin' 
-                ? 'bg-[#714B67] text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${viewMode === 'admin'
+              ? 'bg-[#714B67] text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
           >
             All Employees (Today)
           </button>
@@ -305,24 +223,17 @@ const Attendance = () => {
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
-<<<<<<< Updated upstream
-          <button 
-            onClick={handleExport}
-            className="odoo-btn-secondary flex items-center gap-2"
-          >
-=======
           <button className="odoo-btn-secondary flex items-center gap-2">
->>>>>>> Stashed changes
             <FaDownload size={12} /> Export
           </button>
         </div>
-        
+
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder={viewMode === 'employee' ? 'Search attendance...' : 'Search employee...'} 
+            <input
+              type="text"
+              placeholder={viewMode === 'employee' ? 'Search attendance...' : 'Search employee...'}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#714B67] focus:border-[#714B67]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -354,22 +265,22 @@ const Attendance = () => {
 
               <div className="flex gap-3 flex-wrap">
                 {!todayRecord?.check_in ? (
-                  <button 
-                    onClick={handleCheckIn} 
+                  <button
+                    onClick={handleCheckIn}
                     className="px-6 py-2.5 bg-[#00A09D] hover:bg-[#008a87] text-white rounded-md font-medium shadow-sm transition-colors flex items-center gap-2"
                   >
                     <FaSignInAlt /> Check In
                   </button>
                 ) : !todayRecord?.check_out ? (
                   <>
-                    <button 
-                      onClick={handleBreakStart} 
+                    <button
+                      onClick={handleBreakStart}
                       className="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-md font-medium shadow-sm transition-colors flex items-center gap-2 text-sm"
                     >
                       <FaCoffee size={14} /> Break
                     </button>
-                    <button 
-                      onClick={handleCheckOut} 
+                    <button
+                      onClick={handleCheckOut}
                       className="px-6 py-2.5 bg-[#714B67] hover:bg-[#5d3d54] text-white rounded-md font-medium shadow-sm transition-colors flex items-center gap-2"
                     >
                       <FaSignOutAlt /> Check Out
@@ -384,64 +295,34 @@ const Attendance = () => {
             </div>
           </div>
 
-          {/* Monthly Stats Card */}
-          {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-              <div className="odoo-card p-4 text-center">
-                <div className="text-2xl font-bold text-gray-800">{stats.present_days || 0}</div>
-                <div className="text-xs text-gray-500 mt-1">Present</div>
-              </div>
-              <div className="odoo-card p-4 text-center">
-                <div className="text-2xl font-bold text-orange-600">{stats.half_days || 0}</div>
-                <div className="text-xs text-gray-500 mt-1">Half Days</div>
-              </div>
-              <div className="odoo-card p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{stats.absent_days || 0}</div>
-                <div className="text-xs text-gray-500 mt-1">Absent</div>
-              </div>
-              <div className="odoo-card p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.leave_days || 0}</div>
-                <div className="text-xs text-gray-500 mt-1">On Leave</div>
-              </div>
-              <div className="odoo-card p-4 text-center md:col-span-2">
-                <div className="text-2xl font-bold text-[#714B67]">{stats.total_working_hours || 0}</div>
-                <div className="text-xs text-gray-500 mt-1">Total Hours</div>
-              </div>
-            </div>
-          )}
-
           {/* Employee Attendance Table */}
           <div className="odoo-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
+                    {isAdmin && <th className="p-4">Employee Name</th>}
                     <th className="p-4">Date</th>
                     <th className="p-4">Check In</th>
                     <th className="p-4">Check Out</th>
                     <th className="p-4">Break Duration</th>
                     <th className="p-4">Work Hours</th>
-                    <th className="p-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {employeeRows.map((row) => (
                     <tr key={row.id} className="hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                      {isAdmin && <td className="p-4 font-medium">{user?.name}</td>}
                       <td className="p-4 font-medium">{row.date}</td>
                       <td className="p-4">{row.checkIn}</td>
                       <td className="p-4">{row.checkOut}</td>
                       <td className="p-4">{row.breakDuration}</td>
                       <td className="p-4">{row.workHours}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(row.status)}`}>
-                          {row.status}
-                        </span>
-                      </td>
                     </tr>
                   ))}
                   {employeeRows.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="p-8 text-center text-gray-500">
+                      <td colSpan={isAdmin ? "6" : "5"} className="p-8 text-center text-gray-500">
                         No attendance records found.
                       </td>
                     </tr>
@@ -462,7 +343,7 @@ const Attendance = () => {
             </h3>
             <p className="text-sm text-gray-500 mt-1">Showing {adminRows.length} employees present today</p>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -474,7 +355,6 @@ const Attendance = () => {
                   <th className="p-4">Check In</th>
                   <th className="p-4">Check Out</th>
                   <th className="p-4">Work Hours</th>
-                  <th className="p-4">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -487,16 +367,11 @@ const Attendance = () => {
                     <td className="p-4">{row.checkIn}</td>
                     <td className="p-4">{row.checkOut}</td>
                     <td className="p-4">{row.workHours}</td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(row.status)}`}>
-                        {row.status}
-                      </span>
-                    </td>
                   </tr>
                 ))}
                 {adminRows.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="p-8 text-center text-gray-500">
+                    <td colSpan="7" className="p-8 text-center text-gray-500">
                       No employees present today.
                     </td>
                   </tr>

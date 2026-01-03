@@ -140,9 +140,9 @@ const Navbar = () => {
       {/* Left Side - Logo and Company Name */}
       <div className="flex items-center gap-4">
         {user?.companyLogo && (
-          <img 
-            src={`${serverBaseUrl}${user.companyLogo}`} 
-            alt="Company Logo" 
+          <img
+            src={`${serverBaseUrl}${user.companyLogo}`}
+            alt="Company Logo"
             className="h-10 w-auto object-contain"
           />
         )}
@@ -150,77 +150,64 @@ const Navbar = () => {
           {user?.companyName || 'HRMS'}
         </Link>
         <div className="h-6 w-px bg-gray-300 mx-2"></div>
-        
+
         {/* Navigation Links */}
         <div className="flex items-center gap-1">
-          <Link 
-            to="/dashboard" 
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive('/dashboard') 
-                ? 'bg-[#00A09D] text-white' 
+          <Link
+            to="/dashboard"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/dashboard')
+                ? 'bg-[#00A09D] text-white'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
-            }`}
+              }`}
           >
             <FaHome />
             Employees
           </Link>
-          <Link 
-            to="/attendance" 
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive('/attendance') 
-                ? 'bg-[#00A09D] text-white' 
+          <Link
+            to="/attendance"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/attendance')
+                ? 'bg-[#00A09D] text-white'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
-            }`}
+              }`}
           >
             <FaCalendarCheck />
             Attendance
           </Link>
-          <Link 
-            to="/leave" 
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive('/leave') 
-                ? 'bg-[#00A09D] text-white' 
+          <Link
+            to="/leave"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/leave')
+                ? 'bg-[#00A09D] text-white'
                 : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
-            }`}
+              }`}
           >
             <FaClipboardList />
             Time Off
           </Link>
-          <Link 
-            to="/payroll" 
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive('/payroll') 
-                ? 'bg-[#00A09D] text-white' 
-                : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
-            }`}
-          >
-            <FaMoneyBillWave />
-            Payroll
-          </Link>
+
         </div>
       </div>
 
       {/* Right Side */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-            <div 
-                className={`w-3 h-3 rounded-full ${attendanceStatus.status === 'Present' ? 'bg-green-500' : 'bg-red-500'}`}
-                title={attendanceStatus.status === 'Present' ? `Checked in since ${attendanceStatus.checkInTime}` : 'Checked Out'}
-            ></div>
-            {renderAttendanceButton()}
+          <div
+            className={`w-3 h-3 rounded-full ${attendanceStatus.status === 'Present' ? 'bg-green-500' : 'bg-red-500'}`}
+            title={attendanceStatus.status === 'Present' ? `Checked in since ${attendanceStatus.checkInTime}` : 'Checked Out'}
+          ></div>
+          {renderAttendanceButton()}
         </div>
-        
+
         {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
-          <button 
+          <button
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2"
           >
             {profileAvatar ? (
-              <img 
-                src={`${serverBaseUrl}${profileAvatar}`} 
-                alt="Avatar" 
-                className="w-8 h-8 rounded-full object-cover border-2 border-gray-200" 
+              <img
+                src={`${serverBaseUrl}${profileAvatar}`}
+                alt="Avatar"
+                className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
               />
             ) : (
               <FaUserCircle size={28} className="text-gray-500" />
