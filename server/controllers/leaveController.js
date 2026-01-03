@@ -1,4 +1,4 @@
-import { createLeave, findLeavesByUserId, findAllLeaves, updateLeaveStatus } from '../models/Leave.js';
+import { createLeave, findLeavesByUserId, findAllLeaves, updateLeaveStatus, findLeaveById, addAdminComment } from '../models/Leave.js';
 
 // @desc    Submit a leave request
 // @route   POST /api/leaves
@@ -12,6 +12,14 @@ export const applyForLeave = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide leave type, start date, and end date',
+      });
+    }
+
+    // Validate dates
+    if (new Date(startDate) > new Date(endDate)) {
+      return res.status(400).json({
+        success: false,
+        message: 'End date must be after start date',
       });
     }
 
@@ -77,13 +85,50 @@ export const getAllLeaves = async (req, res) => {
   }
 };
 
+// @desc    Get single leave request
+// @route   GET /api/leaves/:id
+// @access  Private
+export const getLeaveById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const leave = await findLeaveById(id);
+
+    if (!leave) {
+      return res.status(404).json({
+        success: false,
+        message: 'Leave request not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: leave,
+    });
+  } catch (error) {
+    console.error('Get leave by id error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching leave request',
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Update leave status (Approve/Reject)
 // @route   PUT /api/leaves/:id/status
 // @access  Private (Admin/HR)
 export const updateStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, adminComments } = req.body;
+
+    // Debug logging
+    console.log('=== UPDATE STATUS REQUEST ===');
+    console.log('Leave ID:', id);
+    console.log('Status:', status);
+    console.log('Comments:', adminComments);
+    console.log('User Role:', req.user?.role);
+    console.log('User ID:', req.user?.id);
 
     if (!['Approved', 'Rejected', 'Pending'].includes(status)) {
       return res.status(400).json({
@@ -92,7 +137,9 @@ export const updateStatus = async (req, res) => {
       });
     }
 
-    const updated = await updateLeaveStatus(id, status);
+    const updated = await updateLeaveStatus(id, status, adminComments);
+
+    console.log('Update result:', updated);
 
     if (!updated) {
       return res.status(404).json({
@@ -106,10 +153,52 @@ export const updateStatus = async (req, res) => {
       message: `Leave request ${status.toLowerCase()} successfully`,
     });
   } catch (error) {
-    console.error('Update leave status error:', error);
+    console.error('=== UPDATE LEAVE STATUS ERROR ===');
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('Full Error:', error);
+    
     res.status(500).json({
       success: false,
       message: 'Server error while updating leave status',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Add admin comment to leave request
+// @route   PUT /api/leaves/:id/comment
+// @access  Private (Admin/HR)
+export const addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comment } = req.body;
+
+    if (!comment || comment.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment cannot be empty',
+      });
+    }
+
+    const updated = await addAdminComment(id, comment);
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Leave request not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Comment added successfully',
+    });
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while adding comment',
       error: error.message,
     });
   }

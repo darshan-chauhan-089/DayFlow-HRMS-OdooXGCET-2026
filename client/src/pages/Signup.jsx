@@ -233,9 +233,7 @@ const Signup = () => {
           <div>
             <label htmlFor="password" className="odoo-label">PASSWORD</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="text-gray-400 text-sm" />
-              </div>
+              <label htmlFor="password" class="sr-only">Password</label>
               <input
                 id="password"
                 name="password"
@@ -273,9 +271,7 @@ const Signup = () => {
           <div>
             <label htmlFor="confirmPassword" className="odoo-label">CONFIRM PASSWORD</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="text-gray-400 text-sm" />
-              </div>
+              <label htmlFor="confirmPassword" class="sr-only">Confirm Password</label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"

@@ -7,6 +7,7 @@ const mapLeaveRow = (row) => ({
   startDate: row.start_date,
   endDate: row.end_date,
   remarks: row.remarks,
+  adminComments: row.admin_comments,
   status: row.status,
   appliedAt: row.applied_at,
   updatedAt: row.updated_at,
@@ -25,10 +26,25 @@ export const createLeave = async ({ userId, leaveType, startDate, endDate, remar
 
 export const findLeavesByUserId = async (userId) => {
   const [rows] = await pool.execute(
-    `SELECT * FROM leaves WHERE user_id = ? ORDER BY applied_at DESC`,
+    `SELECT l.*, u.name as user_name, u.email as user_email 
+     FROM leaves l 
+     JOIN users u ON l.user_id = u.id 
+     WHERE l.user_id = ? 
+     ORDER BY l.applied_at DESC`,
     [userId]
   );
   return rows.map(mapLeaveRow);
+};
+
+export const findLeaveById = async (id) => {
+  const [rows] = await pool.execute(
+    `SELECT l.*, u.name as user_name, u.email as user_email 
+     FROM leaves l 
+     JOIN users u ON l.user_id = u.id 
+     WHERE l.id = ?`,
+    [id]
+  );
+  return rows.length > 0 ? mapLeaveRow(rows[0]) : null;
 };
 
 export const findAllLeaves = async () => {
@@ -41,10 +57,18 @@ export const findAllLeaves = async () => {
   return rows.map(mapLeaveRow);
 };
 
-export const updateLeaveStatus = async (id, status) => {
+export const updateLeaveStatus = async (id, status, adminComments = null) => {
   const [result] = await pool.execute(
-    `UPDATE leaves SET status = ? WHERE id = ?`,
-    [status, id]
+    `UPDATE leaves SET status = ?, admin_comments = ?, updated_at = NOW() WHERE id = ?`,
+    [status, adminComments, id]
+  );
+  return result.affectedRows > 0;
+};
+
+export const addAdminComment = async (id, comment) => {
+  const [result] = await pool.execute(
+    `UPDATE leaves SET admin_comments = ? WHERE id = ?`,
+    [comment, id]
   );
   return result.affectedRows > 0;
 };

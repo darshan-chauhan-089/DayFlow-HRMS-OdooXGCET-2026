@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS leaves (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     remarks TEXT,
+    admin_comments TEXT,
     status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
