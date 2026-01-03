@@ -11,8 +11,11 @@ import {
   recordAttendanceBreak,
   getAttendanceHistory,
   getTodayStatus,
+<<<<<<< Updated upstream
   getAllEmployees,
   uploadFile,
+=======
+>>>>>>> Stashed changes
   getCurrentMonthAttendance,
   getTodayAllEmployeesAttendance
 } from '../controllers/hrController.js';

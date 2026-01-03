@@ -207,6 +207,7 @@ const Attendance = () => {
       );
   }, [adminAttendance, searchTerm]);
 
+<<<<<<< Updated upstream
   const handleExport = () => {
     const dataToExport = viewMode === 'employee' ? employeeRows : adminRows;
     
@@ -263,6 +264,8 @@ const Attendance = () => {
     document.body.removeChild(link);
   };
 
+=======
+>>>>>>> Stashed changes
   if (loading && viewMode === 'employee') {
     return (
       <div className="flex items-center justify-center h-96">
@@ -302,10 +305,14 @@ const Attendance = () => {
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
+<<<<<<< Updated upstream
           <button 
             onClick={handleExport}
             className="odoo-btn-secondary flex items-center gap-2"
           >
+=======
+          <button className="odoo-btn-secondary flex items-center gap-2">
+>>>>>>> Stashed changes
             <FaDownload size={12} /> Export
           </button>
         </div>

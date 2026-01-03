@@ -1,5 +1,9 @@
+<<<<<<< Updated upstream
 import { upsertProfile, getProfileByUserId, updateProfileAvatar } from '../models/Profile.js';
 import { getAllUsersWithStatus, createUser, findByEmail, countUsersByYear } from '../models/User.js';
+=======
+import { upsertProfile, getProfileByUserId } from '../models/Profile.js';
+>>>>>>> Stashed changes
 import { 
   createCheckIn, 
   updateCheckOut, 
@@ -10,6 +14,7 @@ import {
   getAllTodayAttendance,
   getMonthlyStats
 } from '../models/Attendance.js';
+<<<<<<< Updated upstream
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../config/email.js';
 import { welcomeEmailTemplate } from '../utils/emailTemplates.js';
@@ -37,6 +42,8 @@ const generateRandomPassword = () => {
   }
   return password;
 };
+=======
+>>>>>>> Stashed changes
 
 // @desc    Update user profile
 // @route   PUT /api/hr/profile/:id
@@ -245,6 +252,7 @@ export const getTodayStatus = async (req, res) => {
   }
 };
 
+<<<<<<< Updated upstream
 // @desc    Get all employees with their status
 // @route   GET /api/hr/employees
 // @access  Private (All authenticated users)
@@ -398,6 +406,8 @@ export const uploadFile = async (req, res) => {
   }
 };
 
+=======
+>>>>>>> Stashed changes
 // @desc    Record break time
 // @route   POST /api/hr/attendance/break
 // @access  Private
@@ -405,7 +415,11 @@ export const recordAttendanceBreak = async (req, res) => {
   try {
     const userId = req.user.id;
     const { breakStart, breakEnd } = req.body;
+<<<<<<< Updated upstream
     const date = new Date().toLocaleDateString('en-CA');
+=======
+    const date = new Date().toISOString().split('T')[0];
+>>>>>>> Stashed changes
 
     if (!breakStart || !breakEnd) {
       return res.status(400).json({
@@ -479,7 +493,11 @@ export const getTodayAllEmployeesAttendance = async (req, res) => {
       });
     }
 
+<<<<<<< Updated upstream
     const date = new Date().toLocaleDateString('en-CA');
+=======
+    const date = new Date().toISOString().split('T')[0];
+>>>>>>> Stashed changes
     const records = await getAllTodayAttendance(date);
 
     res.status(200).json({
