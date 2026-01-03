@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 import hrRoutes from './routes/hrRoutes.js';
+import payrollRoutes from './routes/payrollRoutes.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/hr', hrRoutes);
+app.use('/api/payroll', payrollRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

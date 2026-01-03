@@ -37,8 +37,13 @@ CREATE TABLE IF NOT EXISTS attendance (
     date DATE NOT NULL,
     check_in TIME,
     check_out TIME,
+    break_start TIME,
+    break_end TIME,
+    break_duration_minutes INT DEFAULT 0,
+    working_hours DECIMAL(5, 2) DEFAULT 0.00,
     status ENUM('Present', 'Absent', 'Late', 'Half Day', 'On Leave') DEFAULT 'Absent',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE KEY unique_attendance (user_id, date)
 );
@@ -62,13 +67,24 @@ CREATE TABLE IF NOT EXISTS leaves (
 CREATE TABLE IF NOT EXISTS payroll (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    month VARCHAR(20) NOT NULL, -- e.g., "October 2023"
+    month INT NOT NULL,
     year INT NOT NULL,
     basic_salary DECIMAL(10, 2) NOT NULL,
+    total_working_days INT DEFAULT 0,
+    present_days INT DEFAULT 0,
+    half_days INT DEFAULT 0,
+    absent_days INT DEFAULT 0,
+    paid_leave_days INT DEFAULT 0,
+    unpaid_leave_days INT DEFAULT 0,
+    payable_days DECIMAL(5, 2) DEFAULT 0.00,
+    per_day_rate DECIMAL(10, 2) DEFAULT 0.00,
     allowances DECIMAL(10, 2) DEFAULT 0.00,
     deductions DECIMAL(10, 2) DEFAULT 0.00,
+    gross_salary DECIMAL(10, 2) NOT NULL,
     net_salary DECIMAL(10, 2) NOT NULL,
-    status ENUM('Pending', 'Paid') DEFAULT 'Pending',
+    status ENUM('Pending', 'Generated', 'Paid') DEFAULT 'Pending',
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_payroll (user_id, year, month)
 );

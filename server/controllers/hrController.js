@@ -1,6 +1,15 @@
 import { upsertProfile, getProfileByUserId, updateProfileAvatar } from '../models/Profile.js';
 import { getAllUsersWithStatus, createUser, findByEmail, countUsersByYear } from '../models/User.js';
-import { createCheckIn, updateCheckOut, findAttendanceByUserId, getTodayAttendance } from '../models/Attendance.js';
+import { 
+  createCheckIn, 
+  updateCheckOut, 
+  recordBreak,
+  findAttendanceByUserId, 
+  findAttendanceByUserAndMonth,
+  getTodayAttendance,
+  getAllTodayAttendance,
+  getMonthlyStats
+} from '../models/Attendance.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../config/email.js';
 import { welcomeEmailTemplate } from '../utils/emailTemplates.js';
@@ -253,6 +262,7 @@ export const getAllEmployees = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
+      error: error.message,
     });
   }
 };
@@ -383,6 +393,106 @@ export const uploadFile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while uploading file',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Record break time
+// @route   POST /api/hr/attendance/break
+// @access  Private
+export const recordAttendanceBreak = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { breakStart, breakEnd } = req.body;
+    const date = new Date().toISOString().split('T')[0];
+
+    if (!breakStart || !breakEnd) {
+      return res.status(400).json({
+        success: false,
+        message: 'Break start and end times are required',
+      });
+    }
+
+    await recordBreak(userId, date, breakStart, breakEnd);
+
+    res.status(200).json({
+      success: true,
+      message: 'Break recorded successfully',
+      data: { date, breakStart, breakEnd },
+    });
+  } catch (error) {
+    console.error('Record break error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error recording break',
+    });
+  }
+};
+
+// @desc    Get current month attendance for employee
+// @route   GET /api/hr/attendance/month/current
+// @access  Private
+export const getCurrentMonthAttendance = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    const records = await findAttendanceByUserAndMonth(userId, year, month);
+    const stats = await getMonthlyStats(userId, year, month);
+
+    res.status(200).json({
+      success: true,
+      month: `${month}-${year}`,
+      data: records,
+      stats: stats || {
+        total_days: 0,
+        present_days: 0,
+        half_days: 0,
+        absent_days: 0,
+        leave_days: 0,
+        total_working_hours: 0,
+      },
+    });
+  } catch (error) {
+    console.error('Get current month attendance error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching attendance',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get all employees attendance for today (Admin/HR only)
+// @route   GET /api/hr/attendance/all/today
+// @access  Private (Admin/HR)
+export const getTodayAllEmployeesAttendance = async (req, res) => {
+  try {
+    // Check authorization
+    if (req.user.role !== 'Admin' && req.user.role !== 'HR') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view all employees attendance',
+      });
+    }
+
+    const date = new Date().toISOString().split('T')[0];
+    const records = await getAllTodayAttendance(date);
+
+    res.status(200).json({
+      success: true,
+      date,
+      count: records.length,
+      data: records,
+    });
+  } catch (error) {
+    console.error('Get all today attendance error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching attendance',
       error: error.message,
     });
   }

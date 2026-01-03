@@ -7,11 +7,14 @@ import {
   updateAvatar,
   addEmployee, 
   checkIn, 
-  checkOut, 
+  checkOut,
+  recordAttendanceBreak,
   getAttendanceHistory,
   getTodayStatus,
   getAllEmployees,
-  uploadFile
+  uploadFile,
+  getCurrentMonthAttendance,
+  getTodayAllEmployeesAttendance
 } from '../controllers/hrController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -54,7 +57,10 @@ router.put('/profile/:id/avatar', protect, upload.single('avatar'), updateAvatar
 // Attendance Routes
 router.post('/attendance/checkin', protect, checkIn);
 router.post('/attendance/checkout', protect, checkOut);
+router.post('/attendance/break', protect, recordAttendanceBreak);
 router.get('/attendance/status/today', protect, getTodayStatus);
+router.get('/attendance/month/current', protect, getCurrentMonthAttendance);
+router.get('/attendance/all/today', protect, getTodayAllEmployeesAttendance);
 router.get('/attendance/:id', protect, getAttendanceHistory);
 
 export default router;
