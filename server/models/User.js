@@ -147,7 +147,6 @@ export const getAllUsersWithStatus = async () => {
       u.email,
       u.role,
       p.job_title,
-      p.avatar,
       CASE
         WHEN l.status = 'Approved' AND ? BETWEEN l.start_date AND l.end_date THEN 'On Leave'
         WHEN a.id IS NOT NULL AND a.check_out IS NULL THEN 'Present'
