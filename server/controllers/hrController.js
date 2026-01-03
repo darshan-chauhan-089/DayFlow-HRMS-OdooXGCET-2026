@@ -145,7 +145,7 @@ export const checkIn = async (req, res) => {
   try {
     const userId = req.user.id;
     const now = new Date();
-    const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
     const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
 
     await createCheckIn(userId, date, time);
@@ -171,7 +171,7 @@ export const checkOut = async (req, res) => {
   try {
     const userId = req.user.id;
     const now = new Date();
-    const date = now.toISOString().split('T')[0];
+    const date = now.toLocaleDateString('en-CA');
     const time = now.toTimeString().split(' ')[0];
 
     await updateCheckOut(userId, date, time);
@@ -228,7 +228,7 @@ export const getAttendanceHistory = async (req, res) => {
 export const getTodayStatus = async (req, res) => {
   try {
     const userId = req.user.id;
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toLocaleDateString('en-CA');
     
     const record = await getTodayAttendance(userId, date);
 
@@ -405,7 +405,7 @@ export const recordAttendanceBreak = async (req, res) => {
   try {
     const userId = req.user.id;
     const { breakStart, breakEnd } = req.body;
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toLocaleDateString('en-CA');
 
     if (!breakStart || !breakEnd) {
       return res.status(400).json({
@@ -479,7 +479,7 @@ export const getTodayAllEmployeesAttendance = async (req, res) => {
       });
     }
 
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toLocaleDateString('en-CA');
     const records = await getAllTodayAttendance(date);
 
     res.status(200).json({

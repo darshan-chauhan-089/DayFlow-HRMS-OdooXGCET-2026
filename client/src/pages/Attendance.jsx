@@ -207,6 +207,62 @@ const Attendance = () => {
       );
   }, [adminAttendance, searchTerm]);
 
+  const handleExport = () => {
+    const dataToExport = viewMode === 'employee' ? employeeRows : adminRows;
+    
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    let headers = [];
+    let csvContent = '';
+
+    if (viewMode === 'employee') {
+      headers = ['Date', 'Check In', 'Check Out', 'Break Duration', 'Working Hours', 'Status'];
+      csvContent = headers.join(',') + '\n';
+      
+      dataToExport.forEach(row => {
+        const line = [
+          `"${row.date}"`,
+          row.checkIn,
+          row.checkOut,
+          row.breakDuration,
+          row.workHours,
+          row.status
+        ].join(',');
+        csvContent += line + '\n';
+      });
+    } else {
+      headers = ['Employee ID', 'Name', 'Department', 'Job Title', 'Check In', 'Check Out', 'Working Hours', 'Status'];
+      csvContent = headers.join(',') + '\n';
+      
+      dataToExport.forEach(row => {
+        const line = [
+          row.empId,
+          `"${row.name}"`,
+          `"${row.department}"`,
+          `"${row.jobTitle}"`,
+          row.checkIn,
+          row.checkOut,
+          row.workHours,
+          row.status
+        ].join(',');
+        csvContent += line + '\n';
+      });
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `attendance_export_${viewMode}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading && viewMode === 'employee') {
     return (
       <div className="flex items-center justify-center h-96">
@@ -246,7 +302,10 @@ const Attendance = () => {
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <button className="odoo-btn-secondary flex items-center gap-2">
+          <button 
+            onClick={handleExport}
+            className="odoo-btn-secondary flex items-center gap-2"
+          >
             <FaDownload size={12} /> Export
           </button>
         </div>
