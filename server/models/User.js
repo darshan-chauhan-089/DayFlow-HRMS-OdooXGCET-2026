@@ -15,7 +15,7 @@ const mapUserRow = (row) => ({
 
 export const createUser = async ({ name, email, passwordHash }) => {
   const [result] = await pool.execute(
-    `INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)` ,
+    `INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?`)` ,
     [name, email, passwordHash]
   );
 

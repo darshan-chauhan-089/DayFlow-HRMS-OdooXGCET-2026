@@ -1,6 +1,6 @@
 # 📋 Project Summary
 
-## 🎉 MERN Stack Hackathon Boilerplate - Complete!
+## 🎉 DayFlow Human Resources Management System - Summary
 
 Your project has been successfully scaffolded with all necessary files and configurations.
 

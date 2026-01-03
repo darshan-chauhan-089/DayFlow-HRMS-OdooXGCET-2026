@@ -1,6 +1,6 @@
-# MERN Stack Hackathon Boilerplate
+# DayFlow Human Resources Management System
 
-This is a complete MERN stack boilerplate for hackathons with JWT authentication, protected routes, and modern UI.
+This is a DayFlow HRMS starter with JWT authentication, protected routes, and modern UI.
 
 ## Tech Stack
 - Frontend: React (Vite), React Router, Context API, Tailwind CSS

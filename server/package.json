@@ -1,7 +1,7 @@
 {
-  "name": "mern-hackathon-server",
+  "name": "dayflow-hrms-server",
   "version": "1.0.0",
-  "description": "Backend server for MERN Hackathon Boilerplate",
+  "description": "Backend server for DayFlow Human Resources Management System",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "dev": "nodemon server.js"
   },
   "keywords": [
-    "mern",
+    "hrms",
     "express",
     "mongodb",
     "jwt"

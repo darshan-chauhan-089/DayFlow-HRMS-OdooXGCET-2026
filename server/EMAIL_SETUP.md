@@ -14,7 +14,7 @@ This guide will help you set up email functionality for sending OTP codes and no
    - Visit: https://myaccount.google.com/apppasswords
    - Select "Mail" as the app
    - Select "Other" as the device
-   - Name it "MERN App"
+   - Name it "DayFlow HRMS"
    - Copy the 16-character password
 
 3. **Update `.env` file**:
