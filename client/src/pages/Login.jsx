@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { FaLock, FaEnvelope, FaEye, FaEyeSlash, FaRocket } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaTh } from 'react-icons/fa';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -26,137 +26,122 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
-    const loadingToast = toast.loading('Signing in...');
-
-    const result = await login(formData.email, formData.password);
-
-    toast.dismiss(loadingToast);
-
-    if (result.success) {
-      toast.success('Welcome back! 🎉');
-      setTimeout(() => navigate('/dashboard'), 500);
-    } else {
-      toast.error(result.message || 'Login failed');
-      setError(result.message);
+    if (!formData.email || !formData.password) {
+      const errorMsg = 'Please enter both Login ID/Email and Password';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      return;
     }
 
-    setLoading(false);
+    setLoading(true);
+    const loadingToast = toast.loading('Signing in...');
+
+    try {
+      const result = await login(formData.email, formData.password);
+      toast.dismiss(loadingToast);
+
+      if (result.success) {
+        toast.success('Login successful!');
+        navigate('/dashboard');
+      } else {
+        const errorMsg = result.message || 'Invalid credentials';
+        setError(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      const errorMsg = err.response?.data?.message || 'Login failed. Please try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center mb-6">
-          <div className="h-16 w-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl transform hover:rotate-12 transition-transform duration-300">
-            <FaLock className="text-3xl text-white" />
-          </div>
-        </div>
-        <h2 className="mt-6 text-center text-4xl font-extrabold bg-gradient-to-r from-primary-600 to-purple-600 text-transparent bg-clip-text">
-          Welcome Back!
-        </h2>
-        <p className="mt-3 text-center text-base text-gray-600">
-          Don't have an account?{' '}
-          <Link
-            to="/signup"
-            className="font-bold text-primary-600 hover:text-primary-500 transition-colors"
-          >
-            Sign up now →
-          </Link>
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-10 px-6 shadow-2xl rounded-2xl sm:px-12 border border-gray-100">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
-              >
-                <FaEnvelope className="text-primary-600" />
-                Email Address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="your.email@example.com"
-                  className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                />
-              </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-lg shadow-lg border border-gray-200">
+        <div className="text-center">
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="h-16 w-16 bg-gradient-to-br from-purple-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg mb-3">
+              <FaTh className="text-3xl text-white" />
             </div>
-
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">DayFlow</h1>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-600">Sign In</h2>
+        </div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"
-              >
-                <FaLock className="text-primary-600" />
-                Password
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Login Id/Email :-
               </label>
-              <div className="mt-1 relative">
+              <input
+                id="email"
+                name="email"
+                type="text"
+                required
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#714B67] focus:border-[#714B67] focus:z-10 sm:text-sm"
+                placeholder=""
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password :-
+              </label>
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
                   required
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-[#714B67] focus:border-[#714B67] focus:z-10 sm:text-sm"
+                  placeholder=""
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                 />
                 <button
                   type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  {showPassword ? <FaEyeSlash className="text-xl" /> : <FaEye className="text-xl" />}
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
-              <div className="mt-2 flex justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
             </div>
+          </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-all duration-300 transform hover:scale-105"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <FaRocket />
-                    Sign In
-                  </>
-                )}
-              </button>
+          {error && (
+            <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">
+              {error}
             </div>
-          </form>
-        </div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#d980fa] hover:bg-[#c56cf0] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d980fa] disabled:opacity-50 uppercase tracking-wider"
+              style={{ backgroundColor: '#d980fa' }}
+            >
+              {loading ? 'Signing in...' : 'SIGN IN'}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an Account?{' '}
+              <Link to="/signup" className="font-medium text-gray-900 hover:text-gray-700 underline">
+                Sign Up
+              </Link>
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import {
   createUser,
   findByEmail,
+  findByEmailOrEmpId,
   findById,
   findByResetToken,
   findByEmailAndOTP,
@@ -12,22 +13,47 @@ import {
   updatePassword,
   setOtp,
   clearOtp,
+  countUsersByYear
 } from '../models/User.js';
+import { upsertProfile } from '../models/Profile.js';
 import { sendEmail } from '../config/email.js';
-import { otpEmailTemplate, passwordResetSuccessTemplate } from '../utils/emailTemplates.js';
+import { otpEmailTemplate, passwordResetSuccessTemplate, welcomeEmailTemplate } from '../utils/emailTemplates.js';
+
+// Helper to generate Login ID
+const generateLoginId = async (companyName, fullName) => {
+  // 1. Company Code (First 2 letters of Company Name)
+  const companyCode = companyName ? companyName.substring(0, 2).toUpperCase() : 'XX';
+
+  // 2. Name Code (First 2 letters of First Name + First 2 letters of Last Name)
+  const names = fullName.trim().split(' ');
+  const firstName = names[0] || '';
+  const lastName = names.length > 1 ? names[names.length - 1] : firstName; // Fallback if no last name
+  
+  const nameCode = (firstName.substring(0, 2) + lastName.substring(0, 2)).toUpperCase();
+
+  // 3. Year
+  const year = new Date().getFullYear();
+
+  // 4. Serial Number
+  const count = await countUsersByYear(year);
+  const serial = (count + 1).toString().padStart(4, '0');
+
+  return `${companyCode}${nameCode}${year}${serial}`;
+};
 
 // @desc    Signup new user
 // @route   POST /api/auth/signup
 // @access  Public
 export const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role, companyName, phone } = req.body;
+    const companyLogo = req.file ? `/uploads/${req.file.filename}` : null;
 
     // Validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide all required fields',
+        message: 'Please provide all required fields (name, email, password)',
       });
     }
 
@@ -40,17 +66,39 @@ export const signup = async (req, res) => {
       });
     }
 
+    // Generate Login ID (empId)
+    const empId = await generateLoginId(companyName || 'OD', name);
+
     // Hash password and create new user
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({
+      empId,
       name,
+      companyName,
+      companyLogo,
       email,
       passwordHash,
+      role: role || 'Employee',
     });
+
+    // Create Profile with phone if provided (always create profile)
+    await upsertProfile(user.id, { phone: phone || null });
+
+    // Send welcome email with credentials
+    try {
+      await sendEmail({
+        to: email,
+        subject: `Welcome to ${companyName || 'DayFlow HRMS'} - Your Account Details`,
+        html: welcomeEmailTemplate(name, empId, email, password, companyName),
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail signup if email fails
+    }
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
@@ -61,8 +109,12 @@ export const signup = async (req, res) => {
       token,
       user: {
         id: user.id,
+        empId: user.empId,
         name: user.name,
         email: user.email,
+        role: user.role,
+        companyName: user.companyName,
+        companyLogo: user.companyLogo,
       },
     });
   } catch (error) {
@@ -86,12 +138,12 @@ export const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password',
+        message: 'Please provide email/login ID and password',
       });
     }
 
     // Find user and include password hash
-    const user = await findByEmail(email);
+    const user = await findByEmailOrEmpId(email);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -100,8 +152,8 @@ export const login = async (req, res) => {
     }
 
     // Check password
-    const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordCorrect) {
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials',
@@ -110,19 +162,23 @@ export const login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
     res.status(200).json({
       success: true,
-      message: 'Login successful',
+      message: 'Logged in successfully',
       token,
       user: {
         id: user.id,
+        empId: user.empId,
         name: user.name,
         email: user.email,
+        role: user.role,
+        companyName: user.companyName,
+        companyLogo: user.companyLogo,
       },
     });
   } catch (error) {
@@ -134,6 +190,8 @@ export const login = async (req, res) => {
     });
   }
 };
+
+
 
 // @desc    Get user profile
 // @route   GET /api/auth/profile

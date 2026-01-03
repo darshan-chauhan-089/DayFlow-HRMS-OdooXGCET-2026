@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const authMiddleware = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   try {
     // Get token from header
     const authHeader = req.headers.authorization;
@@ -18,15 +18,23 @@ const authMiddleware = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    if (!decoded.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token payload. Please login again.',
+      });
+    }
+
     // Add user info to request
     req.user = {
       id: decoded.id,
       email: decoded.email,
+      role: decoded.role,
     };
 
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('Auth middleware error:', error); // Log the full error
 
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
@@ -49,4 +57,23 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-export default authMiddleware;
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `User role '${req.user.role}' is not authorized to access this route`,
+      });
+    }
+    next();
+  };
+};
+
+export default protect;

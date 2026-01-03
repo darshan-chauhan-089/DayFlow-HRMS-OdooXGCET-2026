@@ -49,9 +49,12 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.signup(userData);
       const { token, user } = response.data;
       
+      // Enrich local user object with optional client-side fields
+      const enrichedUser = { ...user, role: userData?.role, employeeId: userData?.employeeId };
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
+      localStorage.setItem('user', JSON.stringify(enrichedUser));
+      if (userData?.role) localStorage.setItem('userRole', userData.role);
+      setUser(enrichedUser);
       
       return { success: true };
     } catch (error) {
@@ -65,6 +68,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('userRole');
     setUser(null);
   };
 

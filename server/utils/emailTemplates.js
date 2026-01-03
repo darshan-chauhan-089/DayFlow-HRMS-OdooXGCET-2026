@@ -193,62 +193,68 @@ export const otpEmailTemplate = (otp, userName = 'User') => {
   `;
 };
 
-// Welcome Email Template
-export const welcomeEmailTemplate = (userName, userEmail) => {
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Welcome to MERN App</title>
-      ${emailStyles}
-    </head>
-    <body>
-      <div class="email-container">
-        <!-- Header -->
-        <div class="email-header">
-          <h1 class="email-logo">🚀 MERN App</h1>
-        </div>
+// Welcome Email Template with Credentials
+export const welcomeEmailTemplate = (name, empId, email, password, companyName) => `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    ${emailStyles}
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        <h1 class="email-logo">🎉 Welcome to ${companyName || 'DayFlow HRMS'}</h1>
+      </div>
+      
+      <div class="email-body">
+        <h2 class="email-title">Hello ${name}! 👋</h2>
         
-        <!-- Body -->
-        <div class="email-body">
-          <h2 class="email-title">Welcome to MERN App! 🎉</h2>
-          <p class="email-text">
-            Hi ${userName},
-          </p>
-          <p class="email-text">
-            Thank you for signing up! We're excited to have you on board.
-          </p>
-          <p class="email-text">
-            Your account has been successfully created with the email: <strong>${userEmail}</strong>
-          </p>
-          
-          <div class="info-box">
-            <p>
-              <strong>🔐 Keep your account secure:</strong> Never share your password with anyone and enable two-factor authentication for added security.
+        <p class="email-text">
+          Your account has been successfully created! We're excited to have you on board.
+        </p>
+        
+        <div class="otp-container">
+          <p class="otp-label">Your Login Credentials</p>
+          <div style="background: rgba(255,255,255,0.2); border-radius: 8px; padding: 20px; margin: 15px 0;">
+            <p style="color: white; margin: 8px 0; font-size: 16px;">
+              <strong>Login ID:</strong> <span style="font-size: 24px; letter-spacing: 2px; display: block; margin-top: 8px;">${empId}</span>
+            </p>
+            <p style="color: white; margin: 8px 0; font-size: 16px;">
+              <strong>Email:</strong> ${email}
+            </p>
+            <p style="color: white; margin: 8px 0; font-size: 16px;">
+              <strong>Password:</strong> <span style="font-size: 18px; letter-spacing: 1px; display: block; margin-top: 8px;">${password}</span>
             </p>
           </div>
-          
-          <p class="email-text">
-            If you have any questions or need assistance, feel free to reach out to our support team.
-          </p>
+          <p class="otp-expiry">⚠️ Please change your password after first login</p>
         </div>
         
-        <!-- Footer -->
-        <div class="email-footer">
-          <p class="footer-text">
-            Need help? Contact us at <a href="mailto:support@mernapp.com" class="footer-link">support@mernapp.com</a>
-          </p>
-          <p class="footer-text">
-            © ${new Date().getFullYear()} MERN App. All rights reserved.
-          </p>
+        <div class="info-box">
+          <p><strong>🔐 Security Tip:</strong> Keep your credentials safe and don't share them with anyone.</p>
         </div>
+        
+        <p class="email-text">
+          You can now login to the system using your Login ID or Email along with the password provided above.
+        </p>
+        
+        <p class="email-text">
+          If you have any questions or need assistance, please don't hesitate to contact our support team.
+        </p>
       </div>
-    </body>
-    </html>
-  `;
-};
+      
+      <div class="email-footer">
+        <p class="footer-text">
+          Best regards,<br>
+          <strong>DayFlow HRMS Team</strong>
+        </p>
+        <p class="footer-disclaimer">
+          This is an automated email. Please do not reply to this message.
+        </p>
+      </div>
+    </div>
+  </body>
+  </html>
+`;
 
 // Password Reset Success Template
 export const passwordResetSuccessTemplate = (userName) => {
