@@ -44,7 +44,7 @@ export const countUsersByYear = async (year) => {
 
 export const findByEmail = async (email) => {
   const [rows] = await pool.execute(
-    `SELECT id, emp_id, name, company_name, email, password_hash, role, reset_token, reset_token_expire, otp, otp_expire, created_at, updated_at
+    `SELECT id, emp_id, name, company_name, company_logo, email, password_hash, role, reset_token, reset_token_expire, otp, otp_expire, created_at, updated_at
      FROM users WHERE email = ? LIMIT 1`,
     [email]
   );
@@ -55,7 +55,7 @@ export const findByEmail = async (email) => {
 
 export const findByEmailOrEmpId = async (identifier) => {
   const [rows] = await pool.execute(
-    `SELECT id, emp_id, name, company_name, email, password_hash, role, reset_token, reset_token_expire, otp, otp_expire, created_at, updated_at
+    `SELECT id, emp_id, name, company_name, company_logo, email, password_hash, role, reset_token, reset_token_expire, otp, otp_expire, created_at, updated_at
      FROM users WHERE email = ? OR emp_id = ? LIMIT 1`,
     [identifier, identifier]
   );
@@ -66,7 +66,7 @@ export const findByEmailOrEmpId = async (identifier) => {
 
 export const findById = async (id) => {
   const [rows] = await pool.execute(
-    `SELECT id, emp_id, name, company_name, email, password_hash, role, reset_token, reset_token_expire, otp, otp_expire, created_at, updated_at
+    `SELECT id, emp_id, name, company_name, company_logo, email, password_hash, role, reset_token, reset_token_expire, otp, otp_expire, created_at, updated_at
      FROM users WHERE id = ? LIMIT 1`,
     [id]
   );
@@ -134,4 +134,35 @@ export const clearOtp = async (id) => {
     `UPDATE users SET otp = NULL, otp_expire = NULL WHERE id = ?`,
     [id]
   );
+};
+
+export const getAllUsersWithStatus = async () => {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const [users] = await pool.execute(`
+    SELECT
+      u.id,
+      u.emp_id,
+      u.name,
+      u.email,
+      u.role,
+      p.job_title,
+      p.avatar,
+      CASE
+        WHEN l.status = 'Approved' AND ? BETWEEN l.start_date AND l.end_date THEN 'On Leave'
+        WHEN a.id IS NOT NULL AND a.check_out IS NULL THEN 'Present'
+        ELSE 'Absent'
+      END AS attendance_status
+    FROM users u
+    LEFT JOIN profiles p ON u.id = p.user_id
+    LEFT JOIN (
+      SELECT * FROM attendance WHERE date = ?
+    ) a ON u.id = a.user_id
+    LEFT JOIN (
+      SELECT * FROM leaves WHERE status = 'Approved'
+    ) l ON u.id = l.user_id AND ? BETWEEN l.start_date AND l.end_date
+    WHERE u.role != 'Admin'
+  `, [today, today, today]);
+
+  return users;
 };

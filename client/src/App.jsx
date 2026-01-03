@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
@@ -15,7 +15,7 @@ import Leave from './pages/Leave'
 import Payroll from './pages/Payroll'
 
 const MainLayout = ({ children }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
   
   // Public routes that don't need the app shell
@@ -27,14 +27,11 @@ const MainLayout = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA]">
-      {isAuthenticated && <Sidebar role={user?.role} />}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isAuthenticated ? 'ml-64' : ''}`}>
-        {isAuthenticated && <Navbar />}
-        <main className="flex-1 p-6 overflow-auto">
-          {children}
-        </main>
-      </div>
+    <div className="flex flex-col min-h-screen bg-[#F8F9FA]">
+      {isAuthenticated && <Navbar />}
+      <main className="flex-1 p-6 overflow-auto">
+        {children}
+      </main>
     </div>
   );
 };
@@ -81,6 +78,11 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile/:id" element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>

@@ -1,14 +1,81 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { FaChevronDown, FaChevronRight, FaBell, FaSearch } from 'react-icons/fa';
+import api from '../services/api';
+import { FaUserCircle, FaSignOutAlt, FaRegUser, FaChevronDown, FaHome, FaCalendarCheck, FaClipboardList, FaMoneyBillWave } from 'react-icons/fa';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileAvatar, setProfileAvatar] = useState(null);
+  const [attendanceStatus, setAttendanceStatus] = useState({
+    status: 'Absent',
+    checkInTime: null,
+  });
+  const dropdownRef = useRef(null);
+
+  const fetchTodayStatus = async () => {
+    try {
+      const { data } = await api.get('/hr/attendance/status/today');
+      if (data.data) {
+        setAttendanceStatus({
+          status: data.data.check_out ? 'CheckedOut' : 'Present',
+          checkInTime: data.data.check_in,
+        });
+      } else {
+        setAttendanceStatus({ status: 'Absent', checkInTime: null });
+      }
+    } catch (error) {
+      // It's okay if this fails, means no record for today
+      setAttendanceStatus({ status: 'Absent', checkInTime: null });
+    }
+  };
+
+  const fetchProfileAvatar = async () => {
+    try {
+      if (user?.id) {
+        const { data } = await api.get(`/hr/profile/${user.id}`);
+        if (data.data?.avatar) {
+          setProfileAvatar(data.data.avatar);
+        }
+      }
+    } catch (error) {
+      // If fetching profile fails, just use default avatar
+      console.error('Failed to fetch profile avatar:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTodayStatus();
+      fetchProfileAvatar();
+    }
+  }, [isAuthenticated, location.pathname, user?.id]);
+
+  useEffect(() => {
+    // Listen for profile avatar updates
+    const handleAvatarUpdate = (event) => {
+      if (event.detail?.avatar) {
+        setProfileAvatar(event.detail.avatar);
+      }
+    };
+
+    window.addEventListener('profileAvatarUpdated', handleAvatarUpdate);
+    return () => window.removeEventListener('profileAvatarUpdated', handleAvatarUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -16,114 +83,171 @@ const Navbar = () => {
     navigate('/');
   };
 
-  // Generate breadcrumbs based on path
-  const getBreadcrumbs = () => {
-    const path = location.pathname.split('/').filter(Boolean);
-    if (path.length === 0) return [{ name: 'Dashboard', isLast: true }];
-    
-    return path.map((segment, index) => {
-      const isLast = index === path.length - 1;
-      const name = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
-      return { name, isLast };
-    });
+  const handleCheckIn = async () => {
+    try {
+      await api.post('/hr/attendance/checkin');
+      toast.success('Checked in successfully!');
+      fetchTodayStatus();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Check-in failed.');
+    }
+  };
+
+  const handleCheckOut = async () => {
+    try {
+      await api.post('/hr/attendance/checkout');
+      toast.success('Checked out successfully!');
+      fetchTodayStatus();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Check-out failed.');
+    }
+  };
+
+  const renderAttendanceButton = () => {
+    switch (attendanceStatus.status) {
+      case 'Present':
+        return (
+          <button
+            onClick={handleCheckOut}
+            className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-600"
+          >
+            Check Out
+          </button>
+        );
+      case 'Absent':
+      case 'CheckedOut':
+        return (
+          <button
+            onClick={handleCheckIn}
+            className="bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-600"
+          >
+            Check In
+          </button>
+        );
+      default:
+        return null;
+    }
   };
 
   if (!isAuthenticated) return null;
 
-  const serverBaseUrl = 'http://localhost:5000';
-  const breadcrumbs = getBreadcrumbs();
+  const serverBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="bg-white border-b sticky-header h-16 px-6 flex items-center justify-between" style={{ borderColor: 'var(--border-color)', marginLeft: '260px' }}>
-      {/* Left: Breadcrumbs */}
-      <div className="flex items-center">
-        <div className="odoo-breadcrumb">
-          {breadcrumbs.map((crumb, index) => (
-            <div key={index} className="flex items-center gap-2">
-              {index > 0 && <FaChevronRight className="text-xs" style={{ color: 'var(--text-muted)' }} />}
-              <span 
-                className="text-sm font-medium"
-                style={{ color: crumb.isLast ? 'var(--text-main)' : 'var(--text-secondary)' }}
-              >
-                {crumb.name}
-              </span>
-            </div>
-          ))}
+    <nav className="bg-white border-b border-gray-200 h-16 sticky top-0 z-30 px-6 flex items-center justify-between shadow-sm">
+      {/* Left Side - Logo and Company Name */}
+      <div className="flex items-center gap-4">
+        {user?.companyLogo && (
+          <img 
+            src={`${serverBaseUrl}${user.companyLogo}`} 
+            alt="Company Logo" 
+            className="h-10 w-auto object-contain"
+          />
+        )}
+        <Link to="/dashboard" className="font-bold text-xl text-gray-800 hover:text-[#00A09D] transition-colors">
+          {user?.companyName || 'HRMS'}
+        </Link>
+        <div className="h-6 w-px bg-gray-300 mx-2"></div>
+        
+        {/* Navigation Links */}
+        <div className="flex items-center gap-1">
+          <Link 
+            to="/dashboard" 
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              isActive('/dashboard') 
+                ? 'bg-[#00A09D] text-white' 
+                : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
+            }`}
+          >
+            <FaHome />
+            Employees
+          </Link>
+          <Link 
+            to="/attendance" 
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              isActive('/attendance') 
+                ? 'bg-[#00A09D] text-white' 
+                : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
+            }`}
+          >
+            <FaCalendarCheck />
+            Attendance
+          </Link>
+          <Link 
+            to="/leave" 
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              isActive('/leave') 
+                ? 'bg-[#00A09D] text-white' 
+                : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
+            }`}
+          >
+            <FaClipboardList />
+            Time Off
+          </Link>
+          <Link 
+            to="/payroll" 
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              isActive('/payroll') 
+                ? 'bg-[#00A09D] text-white' 
+                : 'text-gray-600 hover:bg-gray-100 hover:text-[#00A09D]'
+            }`}
+          >
+            <FaMoneyBillWave />
+            Payroll
+          </Link>
         </div>
       </div>
 
-      {/* Right: Search, Notifications & Profile */}
+      {/* Right Side */}
       <div className="flex items-center gap-4">
-        {/* Pill Search */}
-        <div className="odoo-search">
-          <FaSearch className="text-xs" style={{ color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            className="w-48"
-          />
+        <div className="flex items-center gap-2">
+            <div 
+                className={`w-3 h-3 rounded-full ${attendanceStatus.status === 'Present' ? 'bg-green-500' : 'bg-red-500'}`}
+                title={attendanceStatus.status === 'Present' ? `Checked in since ${attendanceStatus.checkInTime}` : 'Checked Out'}
+            ></div>
+            {renderAttendanceButton()}
         </div>
-
-        {/* Notifications */}
-        <button className="relative text-gray-500 hover:text-[#714B67] transition-colors">
-          <FaBell className="text-lg" />
-          <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-        </button>
-
-        {/* Company Logo + Name (if available) */}
-        {user?.companyLogo && (
-          <div className="flex items-center gap-2 px-3 py-1.5 border-l" style={{ borderColor: 'var(--border-color)' }}>
-            <img 
-              src={`${serverBaseUrl}${user.companyLogo}`} 
-              alt="Company Logo" 
-              className="h-8 w-auto object-contain"
-            />
-            {user?.companyName && (
-              <span className="text-sm font-semibold hidden lg:block" style={{ color: 'var(--text-main)' }}>
-                {user.companyName}
-              </span>
-            )}
-          </div>
-        )}
-
+        
         {/* Profile Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button 
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded transition-colors"
-            style={{ borderRadius: 'var(--radius-sm)' }}
+            className="flex items-center gap-2"
           >
-            <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: 'var(--odoo-purple)' }}>
-              {user?.name?.charAt(0) || 'U'}
-            </div>
-            <span className="text-sm font-medium hidden md:block" style={{ color: 'var(--text-main)' }}>
-              {user?.name || 'User'}
-            </span>
-            <FaChevronDown className="text-xs" style={{ color: 'var(--text-muted)' }} />
+            {profileAvatar ? (
+              <img 
+                src={`${serverBaseUrl}${profileAvatar}`} 
+                alt="Avatar" 
+                className="w-8 h-8 rounded-full object-cover border-2 border-gray-200" 
+              />
+            ) : (
+              <FaUserCircle size={28} className="text-gray-500" />
+            )}
+            <FaChevronDown className="text-xs text-gray-400" />
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded shadow-md border py-2 z-50" style={{ borderColor: 'var(--border-color)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-md)' }}>
-              <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                <p className="text-sm font-semibold" style={{ color: 'var(--text-main)' }}>{user?.name}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
-                {user?.empId && (
-                  <p className="text-xs mt-1 font-mono" style={{ color: 'var(--text-secondary)' }}>ID: {user.empId}</p>
-                )}
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 py-1 z-50">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                <p className="text-xs text-gray-500">{user?.email}</p>
               </div>
-              <Link 
-                to="/profile" 
-                className="block px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                style={{ color: 'var(--text-main)' }}
+              <Link
+                to={`/profile/${user.id}`}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setProfileOpen(false)}
               >
+                <FaRegUser />
                 My Profile
               </Link>
               <button
                 onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
-                Sign out
+                <FaSignOutAlt />
+                Log Out
               </button>
             </div>
           )}

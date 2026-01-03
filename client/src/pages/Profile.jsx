@@ -1,260 +1,610 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { authAPI } from '../services/api';
-import { FaBriefcase, FaMoneyBillWave, FaFileAlt, FaPhoneAlt, FaMapMarkerAlt, FaUserCircle, FaSave, FaUpload } from 'react-icons/fa';
+import api from '../services/api';
+import { FaUserCircle, FaEdit, FaPlus, FaSave } from 'react-icons/fa';
 
 const Profile = () => {
   const { user } = useAuth();
+  const { id: profileId } = useParams();
+  const fileInputRef = useRef(null);
+
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('resume');
+  const [skills, setSkills] = useState([]);
+  const [certifications, setCertifications] = useState([]);
+  const [newSkill, setNewSkill] = useState('');
+  const [newCertification, setNewCertification] = useState('');
+  
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const isOwnProfile = !profileId || user?.id == profileId;
+  
+  // Role-based permissions
+  const isAdminOrHR = user?.role === 'HR' || user?.role === 'Admin';
+  const canEditResume = isAdminOrHR;
+  const canEditPrivate = isAdminOrHR || isOwnProfile;
+  const canEditSalary = isAdminOrHR;
+  const canEditSecurity = isOwnProfile;
+  const canEditAvatar = isAdminOrHR || isOwnProfile;
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    const fetchProfile = async () => {
+      const idToFetch = profileId || user?.id;
+      if (!idToFetch) {
+        setError('No profile ID specified.');
+        setLoading(false);
+        return;
+      }
 
-  const fetchProfile = async () => {
-    try {
-      const response = await authAPI.getProfile();
-      setProfileData(response.data.user);
-    } catch (err) {
-      const errorMsg = 'Failed to fetch profile data';
-      setError(errorMsg);
-      toast.error(errorMsg);
-      console.error(err);
-    } finally {
-      setLoading(false);
+      try {
+        setLoading(true);
+        const { data } = await api.get(`/hr/profile/${idToFetch}`);
+        
+        // Map snake_case from DB to camelCase for frontend state
+        const mappedData = {
+          ...data.data,
+          jobTitle: data.data.job_title || data.data.jobTitle,
+          salaryBase: data.data.salary_base || data.data.salaryBase,
+          dateOfBirth: data.data.date_of_birth || data.data.dateOfBirth,
+          joiningDate: data.data.joining_date || data.data.joiningDate,
+          personalEmail: data.data.personal_email || data.data.personalEmail,
+          maritalStatus: data.data.marital_status || data.data.maritalStatus,
+          bankAccountNo: data.data.bank_account_no || data.data.bankAccountNo,
+          bankName: data.data.bank_name || data.data.bankName,
+          ifscCode: data.data.ifsc_code || data.data.ifscCode,
+          panNo: data.data.pan_no || data.data.panNo,
+          uanNo: data.data.uan_no || data.data.uanNo,
+        };
+        
+        setProfileData(mappedData);
+        setSkills(data.data.skills || []);
+        setCertifications(data.data.certifications || []);
+        setError('');
+      } catch (err) {
+        setError('Failed to fetch profile data.');
+        toast.error('Failed to fetch profile data.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [profileId, user?.id]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData({ ...profileData, [name]: value });
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData({ ...passwordData, [name]: value });
+  };
+
+  const handleImageClick = () => {
+    if (canEditAvatar) {
+      fileInputRef.current?.click();
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100">
-          {/* Profile Header */}
-          <div className="bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 px-8 py-12 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black bg-opacity-10"></div>
-            <div className="relative flex items-center">
-              <div className="h-28 w-28 rounded-full bg-white flex items-center justify-center text-primary-600 text-5xl font-bold shadow-2xl ring-4 ring-white ring-opacity-50 transform hover:scale-110 transition-transform duration-300">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
-              <div className="ml-8">
-                <h1 className="text-4xl font-bold text-white mb-2">{user?.name}</h1>
-                <p className="text-purple-100 text-lg flex items-center gap-2">
-                  <span>📧</span>
-                  {user?.email}
-                </p>
-                <div className="mt-3 inline-flex items-center gap-2 bg-white bg-opacity-20 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <span className="h-2 w-2 bg-green-400 rounded-full animate-pulse"></span>
-                  <span className="text-white text-sm font-medium">Active Member</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Content */}
-          <div className="px-8 py-10">
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg mb-6 flex items-center gap-3">
-                <span className="text-2xl">⚠️</span>
-                <span>{error}</span>
-              </div>
-            )}
-
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <span>📝</span>
-                  Profile Information
-                </h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <span>👤</span>
-                      Full Name
-                    </label>
-                    <p className="px-5 py-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl text-gray-900 font-medium border-l-4 border-primary-500">
-                      {profileData?.name || user?.name}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <span>📧</span>
-                      Email Address
-                    </label>
-                    <p className="px-5 py-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl text-gray-900 font-medium border-l-4 border-purple-500">
-                      {profileData?.email || user?.email}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <span>📅</span>
-                      Member Since
-                    </label>
-                    <p className="px-5 py-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl text-gray-900 font-medium border-l-4 border-pink-500">
-                      {profileData?.createdAt
-                        ? new Date(profileData.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })
-                        : 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <span>✅</span>
-                      Account Status
-                    </label>
-                    <p className="px-5 py-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl text-green-700 font-bold border-l-4 border-green-500 flex items-center gap-2">
-                      <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
-                      Active
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Read-only: Job Details, Salary Structure, Documents */}
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><FaBriefcase /> Job Details</h3>
-                  <ul className="text-sm text-gray-700 space-y-2">
-                    <li><span className="font-semibold">Designation:</span> {profileData?.designation || 'Software Engineer'}</li>
-                    <li><span className="font-semibold">Department:</span> {profileData?.department || 'IT'}</li>
-                    <li><span className="font-semibold">Employee ID:</span> {profileData?.employeeId || user?.employeeId || 'EMP-12345'}</li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><FaMoneyBillWave /> Salary Structure</h3>
-                  <ul className="text-sm text-gray-700 space-y-2">
-                    <li><span className="font-semibold">Basic:</span> ₹ {profileData?.salaryBasic || '50,000'}</li>
-                    <li><span className="font-semibold">HRA:</span> ₹ {profileData?.salaryHra || '20,000'}</li>
-                    <li><span className="font-semibold">Allowances:</span> ₹ {profileData?.salaryAllow || '10,000'}</li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><FaFileAlt /> Documents</h3>
-                  <ul className="text-sm text-gray-700 space-y-2">
-                    <li>Resume.pdf — <span className="text-green-600 font-medium">Verified</span></li>
-                    <li>OfferLetter.pdf — <span className="text-green-600 font-medium">Verified</span></li>
-                    <li>ID Proof — <span className="text-green-600 font-medium">Verified</span></li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Account Statistics
-                </h2>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="bg-primary-50 p-4 rounded-lg">
-                    <p className="text-sm text-primary-600 font-medium">
-                      Total Projects
-                    </p>
-                    <p className="text-2xl font-bold text-primary-700 mt-2">
-                      12
-                    </p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-green-600 font-medium">
-                      Completed Tasks
-                    </p>
-                    <p className="text-2xl font-bold text-green-700 mt-2">
-                      36
-                    </p>
-                  </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <p className="text-sm text-yellow-600 font-medium">
-                      Active Tasks
-                    </p>
-                    <p className="text-2xl font-bold text-yellow-700 mt-2">
-                      12
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Editable fields */}
-              <EditableSection />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const EditableSection = () => {
-  const [address, setAddress] = useState(localStorage.getItem('profile_address') || '');
-  const [phone, setPhone] = useState(localStorage.getItem('profile_phone') || '');
-  const [photoPreview, setPhotoPreview] = useState(localStorage.getItem('profile_photo') || '');
-
-  const handleSave = () => {
-    localStorage.setItem('profile_address', address);
-    localStorage.setItem('profile_phone', phone);
-    if (photoPreview) localStorage.setItem('profile_photo', photoPreview);
-    toast.success('Profile updated');
-  };
-
-  const handleFile = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setPhotoPreview(ev.target.result);
-    reader.readAsDataURL(file);
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      const idToUpdate = profileId || user?.id;
+      const { data } = await api.put(`/hr/profile/${idToUpdate}/avatar`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setProfileData({ ...profileData, avatar: data.data.avatar });
+      toast.success('Profile picture updated!');
+      
+      window.dispatchEvent(new CustomEvent('profileAvatarUpdated', { 
+        detail: { avatar: data.data.avatar } 
+      }));
+    } catch (error) {
+      toast.error('Failed to upload image.');
+    }
   };
 
+  const saveProfile = async () => {
+    const idToUpdate = profileId || user?.id;
+    try {
+      const payload = {
+        ...profileData,
+        skills,
+        certifications
+      };
+
+      const { data } = await api.put(`/hr/profile/${idToUpdate}`, payload);
+      setProfileData(data.data);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update profile.');
+    }
+  };
+
+  const updatePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords don't match");
+      return;
+    }
+    // Implement password update API call here
+    toast.success("Password update functionality to be implemented");
+    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim()) {
+      setSkills([...skills, newSkill.trim()]);
+      setNewSkill('');
+    }
+  };
+
+  const addCertification = () => {
+    if (newCertification.trim()) {
+      setCertifications([...certifications, newCertification.trim()]);
+      setNewCertification('');
+    }
+  };
+
+  if (loading) return <div className="p-8">Loading profile...</div>;
+  if (error) return <div className="p-8 text-red-500">{error}</div>;
+  if (!profileData) return <div className="p-8">Profile not found.</div>;
+
+  const serverBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
   return (
-    <div className="border-t border-gray-200 pt-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><FaUserCircle /> Edit Profile</h2>
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><FaMapMarkerAlt /> Address</label>
-          <textarea
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Your address"
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary-500"
-            rows={3}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><FaPhoneAlt /> Phone</label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="e.g., +91 98765 43210"
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary-500"
-          />
-        </div>
-      </div>
+    <div className="max-w-7xl mx-auto">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Header Section */}
+        <div className="border-b border-gray-200 p-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">My Profile</h1>
+          
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            {/* Profile Picture */}
+            <div className="relative group mx-auto md:mx-0">
+              <div 
+                onClick={handleImageClick}
+                className={`w-32 h-32 rounded-full bg-pink-200 flex items-center justify-center overflow-hidden ${canEditAvatar ? 'cursor-pointer' : ''}`}
+              >
+                {profileData.avatar ? (
+                  <img 
+                    src={`${serverBaseUrl}${profileData.avatar}`} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <FaUserCircle size={128} className="text-pink-300" />
+                )}
+                {canEditAvatar && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                    <FaEdit className="text-white text-2xl" />
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
 
-      <div className="mt-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2"><FaUpload /> Profile Picture</label>
-        <div className="flex items-center gap-4">
-          {photoPreview ? (
-            <img src={photoPreview} alt="profile" className="w-20 h-20 rounded-full object-cover border" />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-gray-100 border flex items-center justify-center text-gray-400">N/A</div>
+            {/* Profile Info */}
+            <div className="flex-1 w-full">
+              <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">{profileData.name}</h2>
+                  <p className="text-gray-600 font-medium mt-1">{profileData.jobTitle || profileData.job_title || 'Job Position'}</p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-gray-500">Email: {profileData.email}</p>
+                    <p className="text-sm text-gray-500">Mobile: {profileData.phone || 'Not set'}</p>
+                  </div>
+                </div>
+                
+                {/* Company Info Card */}
+                <div className="bg-gray-50 rounded-lg p-4 min-w-[250px] w-full md:w-auto">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">Company</span>
+                      <span className="text-sm font-medium text-gray-800">{user?.companyName || 'DayFlow'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">Department</span>
+                      <span className="text-sm font-medium text-gray-800">{profileData.department || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">Manager</span>
+                      <span className="text-sm font-medium text-gray-800">N/A</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-500">Location</span>
+                      <span className="text-sm font-medium text-gray-800">{profileData.address ? profileData.address.substring(0, 20) + '...' : 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200 px-6 overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            {['resume', 'private', 'salary', 'security'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors capitalize ${
+                  activeTab === tab
+                    ? 'border-[#00A09D] text-[#00A09D]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab === 'private' ? 'Private Info' : tab === 'salary' ? 'Salary Info' : tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === 'resume' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-6">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800">About</h3>
+                  </div>
+                  {canEditResume ? (
+                    <textarea
+                      name="about"
+                      value={profileData.about || ''}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                      placeholder="Tell us about yourself..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {profileData.about || 'No information provided.'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3">Skills</h3>
+                  <div className="space-y-2 mb-3">
+                    {skills.map((skill, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm text-gray-700">{skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {canEditResume && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        placeholder="Add new skill"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                      />
+                      <button onClick={addSkill} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm flex items-center gap-1">
+                        <FaPlus size={12} /> Add
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {canEditResume && (
+                <div className="col-span-1 lg:col-span-2 flex justify-end">
+                  <button onClick={saveProfile} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">
+                    <FaSave /> Save Resume
+                  </button>
+                </div>
+              )}
+            </div>
           )}
-          <input type="file" accept="image/*" onChange={handleFile} />
-        </div>
-      </div>
 
-      <div className="mt-6">
-        <button onClick={handleSave} className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md font-medium transition-colors">
-          <FaSave /> Save Changes
-        </button>
+          {activeTab === 'private' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Personal Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Personal Details</h3>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={profileData.dateOfBirth ? profileData.dateOfBirth.split('T')[0] : ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Residing Address</label>
+                      <textarea
+                        name="address"
+                        value={profileData.address || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
+                      <input
+                        type="text"
+                        name="nationality"
+                        value={profileData.nationality || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Personal Email</label>
+                      <input
+                        type="email"
+                        name="personalEmail"
+                        value={profileData.personalEmail || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <select
+                          name="gender"
+                          value={profileData.gender || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        >
+                          <option value="">Select</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
+                        <select
+                          name="maritalStatus"
+                          value={profileData.maritalStatus || ''}
+                          onChange={handleInputChange}
+                          disabled={!canEditPrivate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                        >
+                          <option value="">Select</option>
+                          <option value="Single">Single</option>
+                          <option value="Married">Married</option>
+                          <option value="Divorced">Divorced</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
+                      <input
+                        type="date"
+                        name="joiningDate"
+                        value={profileData.joiningDate ? profileData.joiningDate.split('T')[0] : ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bank Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Bank Details</h3>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                      <input
+                        type="text"
+                        name="bankAccountNo"
+                        value={profileData.bankAccountNo || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                      <input
+                        type="text"
+                        name="bankName"
+                        value={profileData.bankName || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
+                      <input
+                        type="text"
+                        name="ifscCode"
+                        value={profileData.ifscCode || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">PAN No</label>
+                      <input
+                        type="text"
+                        name="panNo"
+                        value={profileData.panNo || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">UAN NO</label>
+                      <input
+                        type="text"
+                        name="uanNo"
+                        value={profileData.uanNo || ''}
+                        onChange={handleInputChange}
+                        disabled={!canEditPrivate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Emp Code</label>
+                      <input
+                        type="text"
+                        value={profileData.emp_id || ''}
+                        disabled={true}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {canEditPrivate && (
+                <div className="flex justify-end pt-4">
+                  <button onClick={saveProfile} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">
+                    <FaSave /> Save Private Info
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'salary' && (
+            <div className="max-w-2xl space-y-6">
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Salary & Job Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Salary</label>
+                  <input
+                    type="number"
+                    name="salaryBase"
+                    value={profileData.salaryBase || ''}
+                    onChange={handleInputChange}
+                    disabled={!canEditSalary}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                  <input
+                    type="text"
+                    name="jobTitle"
+                    value={profileData.jobTitle || ''}
+                    onChange={handleInputChange}
+                    disabled={!canEditSalary}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                  <input
+                    type="text"
+                    name="department"
+                    value={profileData.department || ''}
+                    onChange={handleInputChange}
+                    disabled={!canEditSalary}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-50"
+                  />
+                </div>
+              </div>
+              {canEditSalary && (
+                <div className="flex justify-end pt-4">
+                  <button onClick={saveProfile} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">
+                    <FaSave /> Save Salary Info
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="max-w-md space-y-6">
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Change Password</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    disabled={!canEditSecurity}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    disabled={!canEditSecurity}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    disabled={!canEditSecurity}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+              {canEditSecurity && (
+                <div className="flex justify-end pt-4">
+                  <button onClick={updatePassword} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">
+                    <FaSave /> Update Password
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

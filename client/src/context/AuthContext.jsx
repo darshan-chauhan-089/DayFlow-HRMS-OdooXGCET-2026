@@ -50,13 +50,13 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data;
       
       // Enrich local user object with optional client-side fields
-      const enrichedUser = { ...user, role: userData?.role, employeeId: userData?.employeeId };
+      const enrichedUser = { ...user };
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(enrichedUser));
-      if (userData?.role) localStorage.setItem('userRole', userData.role);
+      if (user?.role) localStorage.setItem('userRole', user.role);
       setUser(enrichedUser);
       
-      return { success: true };
+      return { success: true, user };
     } catch (error) {
       return {
         success: false,

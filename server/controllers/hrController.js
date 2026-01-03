@@ -1,5 +1,33 @@
-import { upsertProfile, getProfileByUserId } from '../models/Profile.js';
+import { upsertProfile, getProfileByUserId, updateProfileAvatar } from '../models/Profile.js';
+import { getAllUsersWithStatus, createUser, findByEmail, countUsersByYear } from '../models/User.js';
 import { createCheckIn, updateCheckOut, findAttendanceByUserId, getTodayAttendance } from '../models/Attendance.js';
+import bcrypt from 'bcryptjs';
+import { sendEmail } from '../config/email.js';
+import { welcomeEmailTemplate } from '../utils/emailTemplates.js';
+
+// Helper to generate Login ID
+const generateLoginId = async (companyName, fullName) => {
+  const companyCode = companyName ? companyName.substring(0, 2).toUpperCase() : 'XX';
+  const names = fullName.trim().split(' ');
+  const firstName = names[0] || '';
+  const lastName = names.length > 1 ? names[names.length - 1] : firstName;
+  const nameCode = (firstName.substring(0, 2) + lastName.substring(0, 2)).toUpperCase();
+  const year = new Date().getFullYear();
+  const count = await countUsersByYear(year);
+  const serial = (count + 1).toString().padStart(4, '0');
+  return `${companyCode}${nameCode}${year}${serial}`;
+};
+
+// Helper to generate random password
+const generateRandomPassword = () => {
+  const length = 12;
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+};
 
 // @desc    Update user profile
 // @route   PUT /api/hr/profile/:id
@@ -56,6 +84,46 @@ export const getUserProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching profile',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Update user avatar
+// @route   PUT /api/hr/profile/:id/avatar
+// @access  Private
+export const updateAvatar = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Allow users to update their own avatar, or Admins/HR to update anyone
+    if (req.user.id != userId && req.user.role !== 'Admin' && req.user.role !== 'HR') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this avatar',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided',
+      });
+    }
+
+    const avatarPath = `/uploads/${req.file.filename}`;
+    const updatedProfile = await updateProfileAvatar(userId, avatarPath);
+
+    res.status(200).json({
+      success: true,
+      message: 'Avatar updated successfully',
+      data: updatedProfile,
+    });
+  } catch (error) {
+    console.error('Update avatar error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating avatar',
       error: error.message,
     });
   }
@@ -164,6 +232,158 @@ export const getTodayStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
+    });
+  }
+};
+
+// @desc    Get all employees with their status
+// @route   GET /api/hr/employees
+// @access  Private (All authenticated users)
+export const getAllEmployees = async (req, res) => {
+  try {
+    // Allow all authenticated users to view employee list
+    const employees = await getAllUsersWithStatus();
+
+    res.status(200).json({
+      success: true,
+      data: employees,
+    });
+  } catch (error) {
+    console.error('Get all employees error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
+
+// @desc    Add new employee (Admin/HR only)
+// @route   POST /api/hr/employees/add
+// @access  Private (Admin/HR)
+export const addEmployee = async (req, res) => {
+  try {
+    // Check if user is Admin or HR
+    if (req.user.role !== 'Admin' && req.user.role !== 'HR') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to add employees',
+      });
+    }
+
+    const { 
+      name, 
+      email, 
+      password, 
+      phone, 
+      department, 
+      jobTitle, 
+      salaryBase, 
+      joiningDate 
+    } = req.body;
+
+    // Validation
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and email are required',
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await findByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Get admin's company info
+    const adminUser = req.user;
+    const companyName = adminUser.companyName || 'Company';
+    
+    // Generate Login ID
+    const empId = await generateLoginId(companyName, name);
+
+    // Generate or use provided password
+    const plainPassword = password || generateRandomPassword();
+    const passwordHash = await bcrypt.hash(plainPassword, 10);
+
+    // Create user
+    const newUser = await createUser({
+      empId,
+      name,
+      companyName,
+      companyLogo: adminUser.companyLogo || null,
+      email,
+      passwordHash,
+      role: 'Employee',
+    });
+
+    // Create profile with additional info
+    await upsertProfile(newUser.id, {
+      phone: phone || null,
+      department: department || null,
+      jobTitle: jobTitle || null,
+      salaryBase: salaryBase || null,
+      joiningDate: joiningDate || new Date().toISOString().split('T')[0],
+    });
+
+    // Send welcome email with credentials
+    try {
+      await sendEmail({
+        to: email,
+        subject: `Welcome to ${companyName} - Your Account Details`,
+        html: welcomeEmailTemplate(name, empId, email, plainPassword, companyName),
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the employee creation if email fails
+    }
+
+    // Get full profile data
+    const employeeProfile = await getProfileByUserId(newUser.id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Employee added successfully',
+      data: employeeProfile,
+    });
+  } catch (error) {
+    console.error('Add employee error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while adding employee',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Upload a file
+// @route   POST /api/hr/upload
+// @access  Private
+export const uploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file provided',
+      });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    res.status(200).json({
+      success: true,
+      message: 'File uploaded successfully',
+      data: { filePath },
+    });
+  } catch (error) {
+    console.error('Upload file error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while uploading file',
+      error: error.message,
     });
   }
 };

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { findById } from '../models/User.js';
 
 export const protect = async (req, res, next) => {
   try {
@@ -25,11 +26,24 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    // Get full user data from database
+    const user = await findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found. Please login again.',
+      });
+    }
+
     // Add user info to request
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      role: decoded.role,
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      companyName: user.companyName,
+      companyLogo: user.companyLogo,
+      name: user.name,
     };
 
     next();
