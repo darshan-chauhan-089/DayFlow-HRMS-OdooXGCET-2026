@@ -3,12 +3,13 @@ import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { FaUserCircle, FaEdit, FaPlus, FaSave } from 'react-icons/fa';
+import { FaUserCircle, FaEdit, FaPlus, FaSave, FaTrash, FaEye, FaUpload, FaTimes } from 'react-icons/fa';
 
 const Profile = () => {
   const { user } = useAuth();
   const { id: profileId } = useParams();
   const fileInputRef = useRef(null);
+  const certInputRef = useRef(null);
 
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +19,7 @@ const Profile = () => {
   const [certifications, setCertifications] = useState([]);
   const [newSkill, setNewSkill] = useState('');
   const [newCertification, setNewCertification] = useState('');
+  const [certFile, setCertFile] = useState(null);
   
   // Password change state
   const [passwordData, setPasswordData] = useState({
@@ -30,7 +32,7 @@ const Profile = () => {
   
   // Role-based permissions
   const isAdminOrHR = user?.role === 'HR' || user?.role === 'Admin';
-  const canEditResume = isAdminOrHR;
+  const canEditResume = isAdminOrHR || isOwnProfile;
   const canEditPrivate = isAdminOrHR || isOwnProfile;
   const canEditSalary = isAdminOrHR;
   const canEditSecurity = isOwnProfile;
@@ -63,11 +65,24 @@ const Profile = () => {
           ifscCode: data.data.ifsc_code || data.data.ifscCode,
           panNo: data.data.pan_no || data.data.panNo,
           uanNo: data.data.uan_no || data.data.uanNo,
+          whatILoveAboutMyJob: data.data.what_i_love_about_my_job || data.data.whatILoveAboutMyJob,
+          interestsAndHobbies: data.data.interests_and_hobbies || data.data.interestsAndHobbies,
         };
         
         setProfileData(mappedData);
-        setSkills(data.data.skills || []);
-        setCertifications(data.data.certifications || []);
+        
+        let skillsData = data.data.skills || [];
+        if (typeof skillsData === 'string') {
+            try { skillsData = JSON.parse(skillsData); } catch (e) { skillsData = []; }
+        }
+        setSkills(skillsData);
+
+        let certsData = data.data.certifications || [];
+        if (typeof certsData === 'string') {
+            try { certsData = JSON.parse(certsData); } catch (e) { certsData = []; }
+        }
+        setCertifications(certsData);
+        
         setError('');
       } catch (err) {
         setError('Failed to fetch profile data.');
@@ -154,11 +169,48 @@ const Profile = () => {
     }
   };
 
-  const addCertification = () => {
-    if (newCertification.trim()) {
-      setCertifications([...certifications, newCertification.trim()]);
-      setNewCertification('');
+  const deleteSkill = (index) => {
+    const newSkills = [...skills];
+    newSkills.splice(index, 1);
+    setSkills(newSkills);
+  };
+
+  const handleCertFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setCertFile(e.target.files[0]);
     }
+  };
+
+  const addCertification = async () => {
+    if (!newCertification.trim()) return;
+
+    let certData = { name: newCertification.trim(), image: null };
+
+    if (certFile) {
+      const formData = new FormData();
+      formData.append('file', certFile);
+
+      try {
+        const { data } = await api.post('/hr/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        certData.image = data.data.filePath;
+      } catch (error) {
+        toast.error('Failed to upload certificate image');
+        return;
+      }
+    }
+
+    setCertifications([...certifications, certData]);
+    setNewCertification('');
+    setCertFile(null);
+    if (certInputRef.current) certInputRef.current.value = '';
+  };
+
+  const deleteCertification = (index) => {
+    const newCerts = [...certifications];
+    newCerts.splice(index, 1);
+    setCertifications(newCerts);
   };
 
   if (loading) return <div className="p-8">Loading profile...</div>;
@@ -268,9 +320,13 @@ const Profile = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column */}
               <div className="space-y-6">
+                {/* About Section */}
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-800">About</h3>
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                      About
+                      {canEditResume && <FaEdit className="text-gray-400 text-sm" />}
+                    </h3>
                   </div>
                   {canEditResume ? (
                     <textarea
@@ -287,16 +343,70 @@ const Profile = () => {
                     </p>
                   )}
                 </div>
+
+                {/* What I love about my job */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                      What I love about my job
+                      {canEditResume && <FaEdit className="text-gray-400 text-sm" />}
+                    </h3>
+                  </div>
+                  {canEditResume ? (
+                    <textarea
+                      name="whatILoveAboutMyJob"
+                      value={profileData.whatILoveAboutMyJob || ''}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                      placeholder="What do you love about your job?"
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {profileData.whatILoveAboutMyJob || 'No information provided.'}
+                    </p>
+                  )}
+                </div>
+
+                {/* My interests and hobbies */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                      My interests and hobbies
+                      {canEditResume && <FaEdit className="text-gray-400 text-sm" />}
+                    </h3>
+                  </div>
+                  {canEditResume ? (
+                    <textarea
+                      name="interestsAndHobbies"
+                      value={profileData.interestsAndHobbies || ''}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                      placeholder="Share your interests and hobbies..."
+                    />
+                  ) : (
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {profileData.interestsAndHobbies || 'No information provided.'}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Right Column */}
               <div className="space-y-6">
+                {/* Skills Section */}
                 <div className="border border-gray-200 rounded-lg p-4">
                   <h3 className="font-semibold text-gray-800 mb-3">Skills</h3>
                   <div className="space-y-2 mb-3">
                     {skills.map((skill, index) => (
                       <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                         <span className="text-sm text-gray-700">{skill}</span>
+                        {canEditResume && (
+                          <button onClick={() => deleteSkill(index)} className="text-red-500 hover:text-red-700">
+                            <FaTrash size={14} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -313,6 +423,78 @@ const Profile = () => {
                       <button onClick={addSkill} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm flex items-center gap-1">
                         <FaPlus size={12} /> Add
                       </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Certification Section */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3">Certification</h3>
+                  <div className="space-y-2 mb-3">
+                    {certifications.map((cert, index) => {
+                      const name = typeof cert === 'string' ? cert : cert.name;
+                      const image = typeof cert === 'string' ? null : cert.image;
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-700">{name}</span>
+                            {image && (
+                              <a 
+                                href={`${serverBaseUrl}${image}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-700"
+                                title="View Certificate"
+                              >
+                                <FaEye size={14} />
+                              </a>
+                            )}
+                          </div>
+                          {canEditResume && (
+                            <button onClick={() => deleteCertification(index)} className="text-red-500 hover:text-red-700">
+                              <FaTrash size={14} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {canEditResume && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newCertification}
+                          onChange={(e) => setNewCertification(e.target.value)}
+                          placeholder="Certificate Name"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          onKeyPress={(e) => e.key === 'Enter' && addCertification()}
+                        />
+                        <input
+                          type="file"
+                          ref={certInputRef}
+                          onChange={handleCertFileChange}
+                          className="hidden"
+                          accept="image/*"
+                        />
+                        <button 
+                          onClick={() => certInputRef.current?.click()}
+                          className={`px-3 py-2 border border-gray-300 rounded-md text-sm ${certFile ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-600'}`}
+                          title="Upload Certificate Image"
+                        >
+                          <FaUpload size={14} />
+                        </button>
+                        <button onClick={addCertification} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm flex items-center gap-1">
+                          <FaPlus size={12} /> Add
+                        </button>
+                      </div>
+                      {certFile && (
+                        <div className="text-xs text-green-600 flex items-center gap-1">
+                          Selected: {certFile.name} 
+                          <button onClick={() => { setCertFile(null); if(certInputRef.current) certInputRef.current.value = ''; }} className="text-red-500 ml-2"><FaTimes /></button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
