@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import PasswordCriteria from '../components/PasswordCriteria';
-import { FaEye, FaEyeSlash, FaUpload } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUpload, FaBuilding, FaUser, FaEnvelope, FaPhone, FaLock } from 'react-icons/fa';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -84,7 +84,6 @@ const Signup = () => {
       if (result.success) {
         toast.success('Account created successfully!');
         toast.success('Login credentials sent to your email!', { duration: 5000 });
-        // Show the generated Login ID
         if (result.user && result.user.empId) {
            toast.success(`Your Login ID is: ${result.user.empId}`, { duration: 6000 });
         }
@@ -103,176 +102,225 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">Sign Up</h2>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4" style={{ backgroundColor: 'var(--bg-main)' }}>
+      
+      {/* Authentication Card */}
+      <div className="w-full max-w-[500px] odoo-card p-8 bg-white">
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <img src="/logo.jpeg" alt="DayFlow" className="w-8 h-8 object-contain" />
+            <span className="text-xl font-bold" style={{ color: 'var(--text-main)' }}>DayFlow</span>
+          </div>
+          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Create your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
+            <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded" style={{ borderRadius: 'var(--radius-sm)' }}>
+              {error}
             </div>
           )}
-          
-          <div className="space-y-4">
-            {/* Company Name */}
-            <div>
-              <label htmlFor="companyName" className="sr-only">Company Name</label>
+
+          {/* Company Name */}
+          <div>
+            <label htmlFor="companyName" className="odoo-label">
+              COMPANY NAME
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaBuilding className="text-gray-400 text-sm" />
+              </div>
               <input
                 id="companyName"
                 name="companyName"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Company Name"
+                className="odoo-input pl-10"
+                placeholder="Enter company name"
                 value={formData.companyName}
                 onChange={handleChange}
               />
             </div>
+          </div>
 
-            {/* Upload Logo Placeholder */}
-            <div>
-                <label htmlFor="logo-upload" className="w-full flex flex-col justify-center items-center px-4 py-4 border-2 border-dashed border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 cursor-pointer transition-colors">
-                    {logo ? (
-                      <div className="flex flex-col items-center">
-                        <img 
-                          src={URL.createObjectURL(logo)} 
-                          alt="Logo Preview" 
-                          className="h-16 w-auto object-contain mb-2" 
-                        />
-                        <span className="text-purple-600">{logo.name}</span>
-                      </div>
-                    ) : (
-                      <>
-                        <FaUpload className="h-8 w-8 text-gray-400 mb-2" />
-                        <span>Upload Company Logo</span>
-                      </>
-                    )}
-                </label>
-                <input
-                    id="logo-upload"
-                    name="logo"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileChange}
-                />
-            </div>
+          {/* Upload Logo */}
+          <div>
+            <label className="odoo-label">COMPANY LOGO</label>
+            <label 
+              htmlFor="logo-upload" 
+              className="w-full flex flex-col justify-center items-center px-4 py-6 border-2 border-dashed rounded cursor-pointer transition-colors" 
+              style={{ borderColor: 'var(--border-color)', backgroundColor: '#F8F9FA' }}
+            >
+              {logo ? (
+                <div className="flex flex-col items-center">
+                  <img src={URL.createObjectURL(logo)} alt="Logo Preview" className="h-12 w-auto object-contain mb-2" />
+                  <span className="text-xs font-semibold" style={{ color: 'var(--odoo-purple)' }}>{logo.name}</span>
+                </div>
+              ) : (
+                <>
+                  <FaUpload className="h-6 w-6 text-gray-400 mb-2" />
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Click to upload logo</span>
+                </>
+              )}
+            </label>
+            <input id="logo-upload" name="logo" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </div>
 
-            {/* Name */}
-            <div>
-              <label htmlFor="name" className="sr-only">Name</label>
+          {/* Full Name */}
+          <div>
+            <label htmlFor="name" className="odoo-label">FULL NAME</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaUser className="text-gray-400 text-sm" />
+              </div>
               <input
                 id="name"
                 name="name"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Name"
+                className="odoo-input pl-10"
+                placeholder="Enter your full name"
                 value={formData.name}
                 onChange={handleChange}
               />
             </div>
+          </div>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="sr-only">Email</label>
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="odoo-label">EMAIL ADDRESS</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaEnvelope className="text-gray-400 text-sm" />
+              </div>
               <input
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                className="odoo-input pl-10"
+                placeholder="Enter email address"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
+          </div>
 
-            {/* Phone */}
-            <div>
-              <label htmlFor="phone" className="sr-only">Phone</label>
+          {/* Phone */}
+          <div>
+            <label htmlFor="phone" className="odoo-label">PHONE NUMBER</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaPhone className="text-gray-400 text-sm" />
+              </div>
               <input
                 id="phone"
                 name="phone"
                 type="tel"
-                autoComplete="tel"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Phone"
+                className="odoo-input pl-10"
+                placeholder="Enter phone number"
                 value={formData.phone}
                 onChange={handleChange}
               />
             </div>
+          </div>
 
-            {/* Password */}
+          {/* Password */}
+          <div>
+            <label htmlFor="password" className="odoo-label">PASSWORD</label>
             <div className="relative">
-              <label htmlFor="password" class="sr-only">Password</label>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaLock className="text-gray-400 text-sm" />
+              </div>
               <input
                 id="password"
                 name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="odoo-input pl-10 pr-10"
+                placeholder="Create a password"
                 value={formData.password}
                 onChange={handleChange}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-500 focus:outline-none focus:text-gray-600">
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+              </button>
             </div>
-            <PasswordCriteria password={formData.password} />
+            
+            {/* Password Strength Indicator */}
+            {formData.password && (
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Password Strength</span>
+                <span 
+                  className="text-xs font-bold uppercase" 
+                  style={{ color: validatePassword(formData.password) ? 'var(--odoo-teal)' : '#DC3545' }}
+                >
+                  {validatePassword(formData.password) ? 'Strong' : 'Weak'}
+                </span>
+              </div>
+            )}
+          </div>
 
-            {/* Confirm Password */}
+          {/* Confirm Password */}
+          <div>
+            <label htmlFor="confirmPassword" className="odoo-label">CONFIRM PASSWORD</label>
             <div className="relative">
-              <label htmlFor="confirmPassword" class="sr-only">Confirm Password</label>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaLock className="text-gray-400 text-sm" />
+              </div>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                autoComplete="new-password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm Password"
+                className="odoo-input pl-10 pr-10"
+                placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
-               <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-gray-500 focus:outline-none focus:text-gray-600">
-                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
+              </button>
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ backgroundColor: '#d980fa' }}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white hover:bg-purple-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              {loading ? 'Signing up...' : 'Sign Up'}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
-                Sign In
-              </Link>
-            </p>
-          </div>
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="odoo-btn-primary uppercase tracking-wide"
+          >
+            {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
+          </button>
         </form>
+
+        {/* Footer Link */}
+        <div className="text-center mt-6">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: 'var(--odoo-teal)' }}>
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
+
+      {/* Page Footer */}
+      <p className="text-xs text-center mt-8" style={{ color: 'var(--text-muted)' }}>
+        © 2026 DayFlow HRMS. All rights reserved.
+      </p>
     </div>
   );
 };

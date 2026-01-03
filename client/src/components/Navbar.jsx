@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { FaChevronDown, FaBell, FaSearch } from 'react-icons/fa';
+import { FaChevronDown, FaChevronRight, FaBell, FaSearch } from 'react-icons/fa';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -19,97 +19,109 @@ const Navbar = () => {
   // Generate breadcrumbs based on path
   const getBreadcrumbs = () => {
     const path = location.pathname.split('/').filter(Boolean);
-    if (path.length === 0) return 'Dashboard';
+    if (path.length === 0) return [{ name: 'Dashboard', isLast: true }];
     
     return path.map((segment, index) => {
       const isLast = index === path.length - 1;
-      const name = segment.charAt(0).toUpperCase() + segment.slice(1).replace('-', ' ');
-      return (
-        <span key={segment} className="flex items-center">
-          {index > 0 && <span className="mx-2 text-gray-400">/</span>}
-          <span className={isLast ? 'font-semibold text-gray-800' : 'text-gray-500'}>
-            {name}
-          </span>
-        </span>
-      );
+      const name = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      return { name, isLast };
     });
   };
 
-  if (!isAuthenticated) return null; // Don't show navbar on login/landing pages if not authenticated
+  if (!isAuthenticated) return null;
 
-  const serverBaseUrl = 'http://localhost:5000'; // Adjust if needed
+  const serverBaseUrl = 'http://localhost:5000';
+  const breadcrumbs = getBreadcrumbs();
 
   return (
-    <nav className="bg-white border-b border-[#DEE2E6] h-16 sticky top-0 z-30 px-6 flex items-center justify-between">
-      {/* Left: Company Info & Breadcrumbs */}
-      <div className="flex items-center gap-4">
-        {user?.companyLogo && (
-          <img 
-            src={`${serverBaseUrl}${user.companyLogo}`} 
-            alt="Company Logo" 
-            className="h-10 w-auto object-contain"
-          />
-        )}
-        {user?.companyName && (
-          <span className="font-bold text-lg text-gray-700 hidden sm:block">
-            {user.companyName}
-          </span>
-        )}
-        
-        <div className="h-6 w-px bg-gray-300 mx-2 hidden sm:block"></div>
-
-        <div className="flex items-center text-sm">
-          {getBreadcrumbs()}
+    <nav className="bg-white border-b sticky-header h-16 px-6 flex items-center justify-between" style={{ borderColor: 'var(--border-color)', marginLeft: '260px' }}>
+      {/* Left: Breadcrumbs */}
+      <div className="flex items-center">
+        <div className="odoo-breadcrumb">
+          {breadcrumbs.map((crumb, index) => (
+            <div key={index} className="flex items-center gap-2">
+              {index > 0 && <FaChevronRight className="text-xs" style={{ color: 'var(--text-muted)' }} />}
+              <span 
+                className="text-sm font-medium"
+                style={{ color: crumb.isLast ? 'var(--text-main)' : 'var(--text-secondary)' }}
+              >
+                {crumb.name}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Right: Actions & Profile */}
+      {/* Right: Search, Notifications & Profile */}
       <div className="flex items-center gap-4">
-        {/* Search (Visual only for now) */}
-        <div className="hidden md:flex items-center bg-gray-100 rounded-md px-3 py-1.5">
-          <FaSearch className="text-gray-400 text-xs" />
+        {/* Pill Search */}
+        <div className="odoo-search">
+          <FaSearch className="text-xs" style={{ color: 'var(--text-muted)' }} />
           <input 
             type="text" 
             placeholder="Search..." 
-            className="bg-transparent border-none outline-none text-sm ml-2 w-48 text-gray-600 placeholder-gray-400"
+            className="w-48"
           />
         </div>
 
         {/* Notifications */}
-        <button className="text-gray-500 hover:text-[#714B67] transition-colors relative">
-          <FaBell />
+        <button className="relative text-gray-500 hover:text-[#714B67] transition-colors">
+          <FaBell className="text-lg" />
           <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
         </button>
+
+        {/* Company Logo + Name (if available) */}
+        {user?.companyLogo && (
+          <div className="flex items-center gap-2 px-3 py-1.5 border-l" style={{ borderColor: 'var(--border-color)' }}>
+            <img 
+              src={`${serverBaseUrl}${user.companyLogo}`} 
+              alt="Company Logo" 
+              className="h-8 w-auto object-contain"
+            />
+            {user?.companyName && (
+              <span className="text-sm font-semibold hidden lg:block" style={{ color: 'var(--text-main)' }}>
+                {user.companyName}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Profile Dropdown */}
         <div className="relative">
           <button 
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 text-gray-700 hover:text-[#714B67] transition-colors"
+            className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded transition-colors"
+            style={{ borderRadius: 'var(--radius-sm)' }}
           >
-            <div className="h-8 w-8 bg-[#714B67] rounded-full flex items-center justify-center text-white text-sm font-medium">
+            <div className="h-9 w-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: 'var(--odoo-purple)' }}>
               {user?.name?.charAt(0) || 'U'}
             </div>
-            <span className="text-sm font-medium hidden md:block">{user?.name || 'User'}</span>
-            <FaChevronDown className="text-xs text-gray-400" />
+            <span className="text-sm font-medium hidden md:block" style={{ color: 'var(--text-main)' }}>
+              {user?.name || 'User'}
+            </span>
+            <FaChevronDown className="text-xs" style={{ color: 'var(--text-muted)' }} />
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 py-1 z-50">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded shadow-md border py-2 z-50" style={{ borderColor: 'var(--border-color)', borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-md)' }}>
+              <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-main)' }}>{user?.name}</p>
+                <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+                {user?.empId && (
+                  <p className="text-xs mt-1 font-mono" style={{ color: 'var(--text-secondary)' }}>ID: {user.empId}</p>
+                )}
               </div>
               <Link 
                 to="/profile" 
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="block px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                style={{ color: 'var(--text-main)' }}
                 onClick={() => setProfileOpen(false)}
               >
                 My Profile
               </Link>
               <button
                 onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 Sign out
               </button>

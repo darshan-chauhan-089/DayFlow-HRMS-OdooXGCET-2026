@@ -1,70 +1,357 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
+/* Odoo Design System - Global Variables */
 :root {
+  /* Primary Colors */
   --odoo-purple: #714B67;
   --odoo-teal: #00A09D;
-  --odoo-sidebar: #2C3E50;
-  --odoo-bg: #F8F9FA;
-  --odoo-border: #DEE2E6;
-  --odoo-text: #374151;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  
+  /* Surface Colors */
+  --bg-main: #F8F9FA; /* Main page background */
+  --bg-surface: #FFFFFF; /* Card background */
+  --border-color: #DEE2E6;
+  
+  /* Text Colors */
+  --text-main: #212529;
+  --text-secondary: #6C757D; /* Updated to match request */
+  --text-muted: #ADB5BD;
+  
+  /* Sidebar */
+  --sidebar-bg: #2C3E50;
+  --sidebar-active: #00A09D;
+  
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px; /* Updated to match request */
+  
+  /* Shadows */
+  --shadow-card: 0 2px 4px rgba(0,0,0,0.05);
+  
+  /* Transitions */
+  --transition-base: 200ms ease-in-out;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--odoo-bg);
-  color: var(--odoo-text);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer components {
+  /* Odoo Component Classes */
+  .odoo-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+  }
+
+  .odoo-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .odoo-input {
+    width: 100%;
+    background-color: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--text-main);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  /* Fix icon spacing for inputs with icons */
+  .odoo-input.pl-10 {
+    padding-left: 40px !important;
+  }
+
+  .odoo-input.pr-10 {
+    padding-right: 40px !important;
+  }
+
+  .odoo-input:focus {
+    outline: none;
+    border-color: var(--odoo-purple);
+    box-shadow: 0 0 0 3px rgba(113, 75, 103, 0.1); /* Subtle matching glow */
+  }
+
+  .odoo-btn-primary {
+    width: 100%;
+    background-color: var(--odoo-purple);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-base);
+  }
+
+  .odoo-btn-primary:hover {
+    background-color: #5e3d56; /* Darkening effect */
+  }
+
+  .odoo-link {
+    color: var(--odoo-teal);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition-base);
+  }
+
+  .odoo-link:hover {
+    color: #007c7a;
+  }
+
+  .odoo-link-primary {
+    color: var(--odoo-purple);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .odoo-link-primary:hover {
+    text-decoration: underline;
+  }
+}
+
+body {
+  background-color: var(--bg-light);
+  color: var(--text-main);
   font-size: 14px;
+  line-height: 1.5;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* Odoo-style utilities */
+/* Odoo-Style Card Component */
 .odoo-card {
-  background: white;
-  border: 1px solid var(--odoo-border);
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
 }
 
+.odoo-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Odoo-Style Primary Button */
 .odoo-btn-primary {
   background-color: var(--odoo-purple);
   color: white;
-  border-radius: 4px;
-  padding: 6px 16px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all var(--transition-base);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(113, 75, 103, 0.3);
 }
 
 .odoo-btn-primary:hover {
-  background-color: #5a3b52;
+  background-color: #5d3d55;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 rgba(113, 75, 103, 0.3);
 }
 
+.odoo-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 rgba(113, 75, 103, 0.3);
+}
+
+/* Odoo-Style Secondary Button */
 .odoo-btn-secondary {
   background-color: white;
   color: var(--odoo-purple);
-  border: 1px solid var(--odoo-border);
-  border-radius: 4px;
-  padding: 6px 16px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all var(--transition-base);
+  cursor: pointer;
 }
 
 .odoo-btn-secondary:hover {
   background-color: #f3f4f6;
+}
+
+/* Odoo-Style Input */
+.odoo-input {
+  height: 44px;
+  background-color: #F3F4F6;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--text-main);
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.odoo-input:focus {
+  outline: none;
+  border-color: var(--odoo-purple);
+  background-color: var(--bg-main);
+  box-shadow: 0 0 0 2px rgba(113, 75, 103, 0.1);
+}
+
+/* Odoo-Style Label */
+.odoo-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Glassmorphism Effect */
+.glass-header {
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Sticky Header */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Data Table Styles */
+.odoo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.odoo-table thead {
+  background-color: var(--bg-light);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.odoo-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-color);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.odoo-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color var(--transition-fast);
+}
+
+.odoo-table tbody tr:nth-child(even) {
+  background-color: #F8F9FA;
+}
+
+.odoo-table tbody tr:hover {
+  background-color: #F3F4F6;
+}
+
+.odoo-table td {
+  padding: 12px;
+  color: var(--text-main);
+}
+
+/* Breadcrumb */
+.odoo-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Pill Search Bar */
+.odoo-search {
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--transition-fast);
+}
+
+.odoo-search:focus-within {
+  background-color: var(--bg-main);
+  border-color: var(--odoo-purple);
+  box-shadow: 0 0 0 2px rgba(113, 75, 103, 0.1);
+}
+
+.odoo-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+/* Sidebar Navigation */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all var(--transition-fast);
+  border-left: 4px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.sidebar-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.sidebar-nav-item.active {
+  background-color: rgba(0, 160, 157, 0.1);
+  border-left-color: var(--sidebar-active);
+  color: white;
+}
+
+/* Utility Classes */
+.text-sm { font-size: 12px; }
+.text-base { font-size: 14px; }
+.text-lg { font-size: 16px; }
+.text-xl { font-size: 18px; }
+.text-2xl { font-size: 24px; }
+
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
