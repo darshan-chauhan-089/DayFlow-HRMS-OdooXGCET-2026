@@ -5,7 +5,7 @@ This is a DayFlow HRMS starter with JWT authentication, protected routes, and mo
 ## Tech Stack
 - Frontend: React (Vite), React Router, Context API, Tailwind CSS
 - Backend: Node.js, Express.js, JWT, bcrypt
-- Database: MongoDB Atlas, Mongoose ODM
+- Database: MySQL
 - Architecture: MVC (Backend), Component-based (Frontend)
 
 ## Project Status

@@ -1,628 +1,286 @@
-# 🚀 DayFlow Human Resources Management System
+# DayFlow – Human Resources Management System  
+### Odoo × GCET Hackathon 2026  
 
-A production-ready DayFlow HRMS starter designed for HR workflows. Features JWT authentication, protected routes, modern UI with Tailwind CSS, and a scalable architecture.
-
----
-
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Prerequisites](#-prerequisites)
-- [Installation & Setup](#-installation--setup)
-- [Running the Application](#-running-the-application)
-- [API Endpoints](#-api-endpoints)
-- [Frontend Routes](#-frontend-routes)
-- [How Frontend & Backend Connect](#-how-frontend--backend-connect)
-- [Extending for Your Hackathon](#-extending-for-your-hackathon)
-- [Deployment](#-deployment)
-- [Troubleshooting](#-troubleshooting)
+🎥 **Project Demo Video**  
+👉 https://youtu.be/wj3qPYcLyAg  
 
 ---
 
-## ✨ Features
+## 📌 Project Overview
 
-- ✅ **Complete Authentication System** (Signup, Login, JWT)
-- ✅ **OTP-based Password Reset** with email delivery
-- ✅ **Email Integration** with Nodemailer & HTML templates
-- ✅ **Protected Routes** with middleware
-- ✅ **Modern UI** with Tailwind CSS & gradient designs
-- ✅ **Responsive Design** (Mobile-first)
-- ✅ **Context API** for state management
-- ✅ **MongoDB Atlas** integration
-- ✅ **MVC Architecture** on backend
-- ✅ **Component-based** frontend structure
-- ✅ **Password Hashing** with bcrypt
-- ✅ **Password Strength Validation** with real-time feedback
-- ✅ **Error Handling** & validation
-- ✅ **Loading States** & user feedback
-- ✅ **Dashboard Portal** with sidebar
-- ✅ **Profile Page** with user data
-- ✅ **React Icons** throughout the application
-- ✅ **Leave Management System** with approval workflow
-- ✅ **Role-Based Access Control** (RBAC)
-- ✅ **Admin Approval Dashboard** with comments
-- ✅ **Profile Avatars** with employee names
-- ✅ **Professional Table Display** with sorting & filtering
+**DayFlow** is a role-based **Human Resources Management System (HRMS)** developed as part of the **Odoo × GCET Hackathon 2026**.  
+The objective of this project is to **digitize and streamline daily HR operations** such as employee onboarding, attendance tracking, leave management, payroll visibility, and approval workflows.
+
+The system strictly follows the **problem statement and wireframes provided during the hackathon**, focusing on:
+- Clean workflows
+- Role-based access control
+- Secure authentication
+- Real-time updates for HR operations
 
 ---
 
-## 🛠️ Tech Stack
+## 🧰 Tech Stack
 
-### Frontend
-- **React** 18 (with Vite)
-- **React Router** v6
-- **Context API** for state management
-- **Axios** for HTTP requests
-- **Tailwind CSS** for styling
-
-### Backend
-- **Node.js** with ES6 modules
-- **Express.js** framework
-- **MongoDB** (Mongoose ODM)
-- **JWT** for authentication
-- **bcryptjs** for password hashing
-- **Nodemailer** for email delivery
-- **Crypto** for OTP generation
+- **Frontend:** React (Vite)
+- **Backend:** Node.js, Express
+- **Database:** MySQL
+- **Authentication:** JWT (JSON Web Token)
+- **Email Service:** SMTP (Gmail App Password)
 
 ---
 
-## 📁 Project Structure
+## 🚀 Features & Functionality
 
-```
-project-root/
+### 🔐 Authentication & Authorization
+- Secure Sign Up and Sign In
+- JWT-based authentication
+- Role-based access:
+  - **Admin / HR**
+  - **Employee**
+
+---
+
+### 🧑‍💼 Employee Module
+- View personal profile
+- Edit limited profile details (address, phone, profile picture)
+- Check-in / Check-out attendance
+- View daily and weekly attendance records
+- Apply for leave (Paid, Sick, Unpaid)
+- Track leave status:
+  - Pending
+  - Approved
+  - Rejected
+- View payroll details (read-only)
+
+---
+
+### 🛠️ Admin / HR Module
+- Manage employee records
+- View and edit all employee profiles
+- Monitor attendance of all employees
+- Approve or reject leave requests with comments
+- Manage payroll and salary structure
+- Switch between employee views from the dashboard
+
+---
+
+### 📊 Attendance & Leave Management
+- Attendance status types:
+  - Present
+  - Absent
+  - Half-Day
+  - Leave
+- Daily and weekly attendance views
+- Real-time updates after admin approval/rejection
+
+---
+
+### 💰 Payroll Management
+- Employees can view salary details (read-only)
+- Admin has full payroll control
+- Clear separation of payroll access permissions
+
+---
+
+## 🧩 Project Structure
+
+```text
+DayFlow-HRMS-OdooXGCET-2026
 │
-├── client/                          # Frontend (React)
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx          # Navigation bar
-│   │   │   ├── Footer.jsx          # Footer component
-│   │   │   └── ProtectedRoute.jsx  # Route protection HOC
-│   │   │
-│   │   ├── pages/
-│   │   │   ├── Landing.jsx         # Landing/home page
-│   │   │   ├── Login.jsx           # Login page
-│   │   │   ├── Signup.jsx          # Signup page
-│   │   │   ├── Dashboard.jsx       # Protected dashboard
-│   │   │   └── Profile.jsx         # User profile page
-│   │   │
-│   │   ├── context/
-│   │   │   └── AuthContext.jsx     # Authentication context
-│   │   │
-│   │   ├── services/
-│   │   │   └── api.js              # Axios instance & API calls
-│   │   │
-│   │   ├── App.jsx                 # Main app component
-│   │   ├── main.jsx                # Entry point
-│   │   └── index.css               # Global styles
-│   │
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── .env.example
+├── backend
+│   ├── config
+│   │   └── db.js
+│   ├── controllers
+│   ├── middleware
+│   ├── models
+│   ├── routes
+│   ├── utils
+│   ├── .env
+│   └── server.js
 │
-├── server/                          # Backend (Express)
-│   ├── controllers/
-│   │   └── authController.js       # Auth logic with OTP
-│   │
-│   ├── models/
-│   │   └── User.js                 # User schema with OTP fields
-│   │
-│   ├── routes/
-│   │   └── authRoutes.js           # Auth routes
-│   │
-│   ├── middleware/
-│   │   └── authMiddleware.js       # JWT verification
-│   │
-│   ├── config/
-│   │   ├── db.js                   # MongoDB connection
-│   │   └── email.js                # Nodemailer configuration
-│   │
-│   ├── utils/
-│   │   └── emailTemplates.js       # HTML email templates
-│   │
-│   ├── app.js                      # Express app setup
-│   ├── server.js                   # Server entry point
-│   ├── EMAIL_SETUP.md              # Email configuration guide
-│   └── package.json
+├── frontend
+│   ├── src
+│   │   ├── components
+│   │   ├── pages
+│   │   ├── services
+│   │   └── App.jsx
+│   ├── .env
+│   └── vite.config.js
 │
-├── .env.example                     # Environment variables template
-├── .gitignore
 └── README.md
+
+```
+---
+
+## 🗄️ MySQL Database (Backend Data Layer)
+
+### Database Used
+
+* **MySQL**
+* Database Name: `Dayflow_HRMS`
+
+### Key Tables (Logical Design)
+
+* `users` – authentication & roles
+* `employees` – profile & job details
+* `attendance` – daily attendance records
+* `leaves` – leave requests & status
+* `payroll` – salary information
+
+The database follows **relational design**, ensuring:
+
+* One-to-many relationships (Employee → Attendance, Leaves)
+* Role-based filtering at API level
+* Data integrity and security
+
+---
+
+## ⚙️ Local Installation & Setup Guide
+
+### 🧩 Prerequisites
+
+Ensure the following are installed:
+
+* Node.js (v18 or above)
+* Git
+* MySQL Server
+
+👉 If MySQL is not installed, follow this tutorial:
+[https://www.youtube.com/watch?v=hiS_mWZmmI0](https://www.youtube.com/watch?v=hiS_mWZmmI0)
+
+---
+
+## 📥 Clone the Repository
+
+```bash
+git clone https://github.com/darshan-chauhan-089/DayFlow-HRMS-OdooXGCET-2026.git
+cd DayFlow-HRMS-OdooXGCET-2026
 ```
 
 ---
 
-## ✅ Prerequisites
+## 🗄️ MySQL Setup (From Scratch)
 
-Before you begin, ensure you have:
+1. Open MySQL Workbench or CLI
+2. Create the database:
 
-- **Node.js** (v16 or higher) - [Download](https://nodejs.org/)
-- **MongoDB Atlas Account** - [Sign up](https://www.mongodb.com/cloud/atlas)
-- **Git** - [Download](https://git-scm.com/)
-- **Code Editor** (VS Code recommended)
+```sql
+CREATE DATABASE Dayflow_HRMS;
+```
+
+3. Ensure MySQL is running on:
+
+* Host: `localhost`
+* Port: `3306`
 
 ---
 
-## 🚀 Installation & Setup
+## 🔧 Backend Setup (Node + Express)
 
-### 1. Clone the Repository
-
-```bash
-git clone <your-repo-url>
-cd <project-folder>
-```
-
-### 2. Set Up MongoDB Atlas
-
-1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create a new cluster (free tier M0)
-3. Create a database user with username and password
-4. Whitelist your IP address (or use 0.0.0.0/0 for development)
-5. Get your connection string
-
-### 3. Environment Variables
-
-#### Backend (.env in root)
-
-Create a `.env` file in the root directory:
+### Step 1: Go to Backend Folder
 
 ```bash
-cp .env.example .env
+cd backend
 ```
 
-Edit `.env` and add your values:
+### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+### Step 3: Create `.env` File (Backend)
 
 ```env
-# MongoDB Connection
-MONGODB_URI=mongodb+srv://your_username:your_password@cluster.mongodb.net/mern_hackathon?retryWrites=true&w=majority
-
 # JWT Configuration
-JWT_SECRET=your_random_secret_key_generate_this
+JWT_SECRET=20204da8cfd2263cbab951c2380bda0b
 JWT_EXPIRE=7d
 
 # Server Configuration
 PORT=5000
-NODE_ENV=development
 
-# Email Configuration (for OTP functionality)
+# Email Configuration (Gmail)
+# Enable 2-Step Verification and use App Password
+# https://myaccount.google.com/apppasswords
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=your-email@gmail.com
-EMAIL_FROM_NAME=MERN App
+EMAIL_USER=darshanchauhan089@gmail.com
+EMAIL_PASSWORD=klzt qlxg kbcj elei
+EMAIL_FROM=darshanchauhan089@gmail.com
+EMAIL_FROM_NAME=DayFlow HRMS
+
+NODE_ENV=development
+
+# MySQL Database Connection
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASS=<Your-Connection-Password>
+DB_NAME=Dayflow_HRMS
 ```
 
-**Generate JWT Secret:**
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+> ⚠️ Replace credentials with your own values.
 
-**Email Setup:**
-See [server/EMAIL_SETUP.md](server/EMAIL_SETUP.md) for detailed email configuration instructions.
+---
 
-Quick Gmail setup:
-1. Enable 2-Step Verification on your Google Account
-2. Generate an App Password at https://myaccount.google.com/apppasswords
-3. Use the 16-character password in EMAIL_PASSWORD
-
-#### Frontend (.env in client/)
-
-Create a `.env` file in the `client/` directory:
+### Step 4: Start Backend Server
 
 ```bash
-cd client
-cp .env.example .env
+npm run dev
 ```
 
-Edit `client/.env`:
+Backend will run at:
+
+```
+http://localhost:5000
+```
+
+---
+
+## 🎨 Frontend Setup (React + Vite)
+
+### Step 1: Go to Frontend Folder
+
+```bash
+cd ../frontend
+```
+
+### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+### Step 3: Create `.env` File (Frontend)
 
 ```env
+# Client Environment Variables
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 4. Install Dependencies
-
-#### Install Backend Dependencies
-
-```bash
-cd server
-npm install
-```
-
-#### Install Frontend Dependencies
-
-```bash
-cd ../client
-npm install
-```
-
 ---
 
-## ▶️ Running the Application
-
-You need to run both frontend and backend simultaneously in separate terminals.
-
-### Terminal 1: Start Backend Server
+### Step 4: Run Frontend
 
 ```bash
-cd server
 npm run dev
 ```
 
-You should see:
+Frontend will run at:
+
 ```
-✅ MongoDB Connected: cluster.mongodb.net
-🚀 Server running in development mode on port 5000
-📍 API Base URL: http://localhost:5000/api
-```
-
-### Terminal 2: Start Frontend
-
-```bash
-cd client
-npm run dev
-```
-
-You should see:
-```
-  VITE ready in XXX ms
-
-  ➜  Local:   http://localhost:5173/
-```
-
-Open your browser and navigate to **http://localhost:5173/**
-
----
-
-## 🔌 API Endpoints
-
-### Base URL
-```
-http://localhost:5000/api
-```
-
-### Authentication Endpoints
-
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| POST | `/auth/signup` | Public | Register new user |
-| POST | `/auth/login` | Public | Login user |
-| GET | `/auth/profile` | Private | Get user profile |
-
-### Request/Response Examples
-
-#### Signup
-```json
-POST /api/auth/signup
-
-Request:
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-
-Response:
-{
-  "success": true,
-  "message": "User created successfully",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "507f1f77bcf86cd799439011",
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
-}
-```
-
-#### Login
-```json
-POST /api/auth/login
-
-Request:
-{
-  "email": "john@example.com",
-  "password": "password123"
-}
-
-Response:
-{
-  "success": true,
-  "message": "Login successful",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "507f1f77bcf86cd799439011",
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
-}
-```
-
-#### Get Profile (Protected)
-```json
-GET /api/auth/profile
-Headers: Authorization: Bearer <token>
-
-Response:
-{
-  "success": true,
-  "user": {
-    "id": "507f1f77bcf86cd799439011",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "createdAt": "2024-01-01T00:00:00.000Z"
-  }
-}
+http://localhost:5173
 ```
 
 ---
 
-## 🗺️ Frontend Routes
+## 👥 Team Members
 
-| Route | Component | Access | Description |
-|-------|-----------|--------|-------------|
-| `/` | Landing | Public | Home page with hero section |
-| `/login` | Login | Public | User login form |
-| `/signup` | Signup | Public | User registration form |
-| `/dashboard` | Dashboard | Protected | User dashboard with sidebar |
-| `/profile` | Profile | Protected | User profile page |
+| Name                  | Role        | LinkedIn                                                                                                             | GitHub                                                                             |
+| --------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Darshan Chauhan**   | Team Leader | [https://www.linkedin.com/in/darshan-chauhan-5b9023276/](https://www.linkedin.com/in/darshan-chauhan-5b9023276/)     | [https://github.com/darshan-chauhan-089/](https://github.com/darshan-chauhan-089/) |
+| **Nirdesh Bhesaniya** | Team Member | [https://www.linkedin.com/in/nirdesh-bhesaniya-387b67284/](https://www.linkedin.com/in/nirdesh-bhesaniya-387b67284/) | [https://github.com/nirdeshbhesaniya](https://github.com/nirdeshbhesaniya)         |
+| **Madhav Shukla**     | Team Member | [https://www.linkedin.com/in/madhav-shukla-201776291/](https://www.linkedin.com/in/madhav-shukla-201776291/)         | [https://github.com/shuklamadhav2005](https://github.com/shuklamadhav2005)         |
+| **Diya Patel**        | Team Member | [https://www.linkedin.com/in/diya-patel-aa7ab4327/](https://www.linkedin.com/in/diya-patel-aa7ab4327/)               | [https://github.com/Diya-patel111](https://github.com/Diya-patel111)               |
 
----
 
-## 🔄 How Frontend & Backend Connect
-
-### 1. API Service Layer (`client/src/services/api.js`)
-
-The frontend uses Axios to communicate with the backend:
-
-```javascript
-// Base configuration
-const API_URL = 'http://localhost:5000/api'
-
-// Request interceptor adds JWT token
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-```
-
-### 2. Authentication Flow
-
-```
-User Action (Login) 
-    ↓
-AuthContext.login() 
-    ↓
-API call to /api/auth/login 
-    ↓
-Backend validates credentials 
-    ↓
-Backend returns JWT token 
-    ↓
-Frontend stores token in localStorage 
-    ↓
-User state updated in Context 
-    ↓
-Redirect to Dashboard
-```
-
-### 3. Protected Routes
-
-```javascript
-// ProtectedRoute checks authentication
-<Route path="/dashboard" element={
-  <ProtectedRoute>
-    <Dashboard />
-  </ProtectedRoute>
-} />
-```
-
-### 4. Backend Middleware
-
-```javascript
-// JWT verification on protected routes
-router.get('/profile', authMiddleware, getProfile)
-
-// Middleware extracts user from token
-authMiddleware: (req, res, next) => {
-  const token = req.headers.authorization.split(' ')[1]
-  const decoded = jwt.verify(token, JWT_SECRET)
-  req.user = decoded
-  next()
-}
-```
-
----
-
-## 🎯 Extending for Your Hackathon
-
-This boilerplate is designed to be easily extended with your hackathon idea. Here's where to plug in your features:
-
-### 1. Add New Database Models
-
-Create new models in `server/models/`:
-
-```javascript
-// server/models/Project.js
-import mongoose from 'mongoose';
-
-const projectSchema = new mongoose.Schema({
-  title: String,
-  description: String,
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  // Add your fields here
-});
-
-export default mongoose.model('Project', projectSchema);
-```
-
-### 2. Add New API Routes
-
-Create controllers and routes:
-
-```javascript
-// server/controllers/projectController.js
-export const createProject = async (req, res) => {
-  // Your business logic
-};
-
-// server/routes/projectRoutes.js
-import express from 'express';
-import { createProject } from '../controllers/projectController.js';
-import authMiddleware from '../middleware/authMiddleware.js';
-
-const router = express.Router();
-router.post('/', authMiddleware, createProject);
-export default router;
-
-// Add to server/app.js
-import projectRoutes from './routes/projectRoutes.js';
-app.use('/api/projects', projectRoutes);
-```
-
-### 3. Add New Frontend Pages
-
-Create new pages in `client/src/pages/`:
-
-```javascript
-// client/src/pages/Projects.jsx
-const Projects = () => {
-  // Your component logic
-  return <div>Projects Page</div>
-};
-export default Projects;
-
-// Add route in client/src/App.jsx
-<Route path="/projects" element={
-  <ProtectedRoute>
-    <Projects />
-  </ProtectedRoute>
-} />
-```
-
-### 4. Update Dashboard Sidebar
-
-Edit `client/src/pages/Dashboard.jsx` to add your menu items.
-
-### 5. API Integration
-
-Add new API functions in `client/src/services/api.js`:
-
-```javascript
-export const projectAPI = {
-  getAll: () => api.get('/projects'),
-  create: (data) => api.post('/projects', data),
-  // Add more endpoints
-};
-```
-
----
-
-## 🌐 Deployment
-
-### Frontend (Vercel/Netlify)
-
-1. Build the frontend:
-```bash
-cd client
-npm run build
-```
-
-2. Update environment variable:
-```env
-VITE_API_URL=https://your-backend-url.com/api
-```
-
-3. Deploy to Vercel:
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-### Backend (Railway/Render/Heroku)
-
-1. Push to GitHub
-2. Connect your repository to hosting platform
-3. Set environment variables in platform dashboard
-4. Deploy
-
-### Database
-
-MongoDB Atlas is already cloud-hosted, just update the connection string in production.
-
----
-
-## 🐛 Troubleshooting
-
-### Backend won't start
-
-- Check MongoDB connection string
-- Ensure all environment variables are set
-- Verify MongoDB Atlas IP whitelist
-
-### Frontend can't connect to backend
-
-- Check VITE_API_URL in client/.env
-- Ensure backend is running on correct port
-- Check browser console for CORS errors
-
-### Authentication not working
-
-- Verify JWT_SECRET is set in backend .env
-- Check token is being stored in localStorage
-- Inspect network tab for API responses
-
-### "Cannot find module" errors
-
-- Delete node_modules and package-lock.json
-- Run `npm install` again
-
----
-
-## 📚 Additional Resources
-
-- [React Documentation](https://react.dev/)
-- [Express.js Guide](https://expressjs.com/)
-- [MongoDB Atlas Docs](https://docs.atlas.mongodb.com/)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [JWT.io](https://jwt.io/)
-
----
-
-## 🎉 Ready for Your Hackathon!
-
-This boilerplate provides a solid foundation. Focus on:
-
-1. **Understanding the flow** - trace a request from frontend to backend
-2. **Identifying extension points** - models, controllers, pages
-3. **Building your unique features** on top of this structure
-
-### What Judges Love:
-
-✅ Clean, professional UI (already provided)  
-✅ Working authentication system (already provided)  
-✅ Scalable architecture (already provided)  
-✅ **Your innovative solution to the problem statement** (your part!)
-
----
-
-## 📝 License
-
-MIT License - Feel free to use this for your hackathon!
-
----
-
-## 🤝 Contributing
-
-This is a hackathon boilerplate. Fork it, customize it, make it yours!
-
----
-
-**Good luck with your hackathon! 🚀**
