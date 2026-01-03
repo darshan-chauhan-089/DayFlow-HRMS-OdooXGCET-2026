@@ -20,7 +20,7 @@ const Profile = () => {
   const [newSkill, setNewSkill] = useState('');
   const [newCertification, setNewCertification] = useState('');
   const [certFile, setCertFile] = useState(null);
-  
+
   // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -29,7 +29,7 @@ const Profile = () => {
   });
 
   const isOwnProfile = !profileId || user?.id == profileId;
-  
+
   // Role-based permissions
   const isAdminOrHR = user?.role === 'HR' || user?.role === 'Admin';
   const canEditResume = isAdminOrHR || isOwnProfile;
@@ -50,7 +50,7 @@ const Profile = () => {
       try {
         setLoading(true);
         const { data } = await api.get(`/hr/profile/${idToFetch}`);
-        
+
         // Map snake_case from DB to camelCase for frontend state
         const mappedData = {
           ...data.data,
@@ -68,21 +68,21 @@ const Profile = () => {
           whatILoveAboutMyJob: data.data.what_i_love_about_my_job || data.data.whatILoveAboutMyJob,
           interestsAndHobbies: data.data.interests_and_hobbies || data.data.interestsAndHobbies,
         };
-        
+
         setProfileData(mappedData);
-        
+
         let skillsData = data.data.skills || [];
         if (typeof skillsData === 'string') {
-            try { skillsData = JSON.parse(skillsData); } catch (e) { skillsData = []; }
+          try { skillsData = JSON.parse(skillsData); } catch (e) { skillsData = []; }
         }
         setSkills(skillsData);
 
         let certsData = data.data.certifications || [];
         if (typeof certsData === 'string') {
-            try { certsData = JSON.parse(certsData); } catch (e) { certsData = []; }
+          try { certsData = JSON.parse(certsData); } catch (e) { certsData = []; }
         }
         setCertifications(certsData);
-        
+
         setError('');
       } catch (err) {
         setError('Failed to fetch profile data.');
@@ -126,9 +126,9 @@ const Profile = () => {
       });
       setProfileData({ ...profileData, avatar: data.data.avatar });
       toast.success('Profile picture updated!');
-      
-      window.dispatchEvent(new CustomEvent('profileAvatarUpdated', { 
-        detail: { avatar: data.data.avatar } 
+
+      window.dispatchEvent(new CustomEvent('profileAvatarUpdated', {
+        detail: { avatar: data.data.avatar }
       }));
     } catch (error) {
       toast.error('Failed to upload image.');
@@ -225,18 +225,18 @@ const Profile = () => {
         {/* Header Section */}
         <div className="border-b border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-6">My Profile</h1>
-          
+
           <div className="flex flex-col md:flex-row items-start gap-6">
             {/* Profile Picture */}
             <div className="relative group mx-auto md:mx-0">
-              <div 
+              <div
                 onClick={handleImageClick}
                 className={`w-32 h-32 rounded-full bg-pink-200 flex items-center justify-center overflow-hidden ${canEditAvatar ? 'cursor-pointer' : ''}`}
               >
                 {profileData.avatar ? (
-                  <img 
-                    src={`${serverBaseUrl}${profileData.avatar}`} 
-                    alt="Profile" 
+                  <img
+                    src={`${serverBaseUrl}${profileData.avatar}`}
+                    alt="Profile"
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -268,7 +268,7 @@ const Profile = () => {
                     <p className="text-sm text-gray-500">Mobile: {profileData.phone || 'Not set'}</p>
                   </div>
                 </div>
-                
+
                 {/* Company Info Card */}
                 <div className="bg-gray-50 rounded-lg p-4 min-w-[250px] w-full md:w-auto">
                   <div className="space-y-2">
@@ -302,11 +302,10 @@ const Profile = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors capitalize ${
-                  activeTab === tab
+                className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors capitalize ${activeTab === tab
                     ? 'border-[#00A09D] text-[#00A09D]'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                  }`}
               >
                 {tab === 'private' ? 'Private Info' : tab === 'salary' ? 'Salary Info' : tab}
               </button>
@@ -434,15 +433,15 @@ const Profile = () => {
                     {certifications.map((cert, index) => {
                       const name = typeof cert === 'string' ? cert : cert.name;
                       const image = typeof cert === 'string' ? null : cert.image;
-                      
+
                       return (
                         <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-700">{name}</span>
                             {image && (
-                              <a 
-                                href={`${serverBaseUrl}${image}`} 
-                                target="_blank" 
+                              <a
+                                href={`${serverBaseUrl}${image}`}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-500 hover:text-blue-700"
                                 title="View Certificate"
@@ -478,7 +477,7 @@ const Profile = () => {
                           className="hidden"
                           accept="image/*"
                         />
-                        <button 
+                        <button
                           onClick={() => certInputRef.current?.click()}
                           className={`px-3 py-2 border border-gray-300 rounded-md text-sm ${certFile ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-600'}`}
                           title="Upload Certificate Image"
@@ -491,15 +490,15 @@ const Profile = () => {
                       </div>
                       {certFile && (
                         <div className="text-xs text-green-600 flex items-center gap-1">
-                          Selected: {certFile.name} 
-                          <button onClick={() => { setCertFile(null); if(certInputRef.current) certInputRef.current.value = ''; }} className="text-red-500 ml-2"><FaTimes /></button>
+                          Selected: {certFile.name}
+                          <button onClick={() => { setCertFile(null); if (certInputRef.current) certInputRef.current.value = ''; }} className="text-red-500 ml-2"><FaTimes /></button>
                         </div>
                       )}
                     </div>
                   )}
                 </div>
               </div>
-              
+
               {canEditResume && (
                 <div className="col-span-1 lg:col-span-2 flex justify-end">
                   <button onClick={saveProfile} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">
@@ -516,7 +515,7 @@ const Profile = () => {
                 {/* Personal Details */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Personal Details</h3>
-                  
+
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
@@ -611,7 +610,7 @@ const Profile = () => {
                 {/* Bank Details */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Bank Details</h3>
-                  
+
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
@@ -680,7 +679,7 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-              
+
               {canEditPrivate && (
                 <div className="flex justify-end pt-4">
                   <button onClick={saveProfile} className="px-6 py-2 bg-[#00A09D] text-white rounded-md hover:bg-[#008f8c] flex items-center gap-2">
