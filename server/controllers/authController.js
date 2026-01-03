@@ -88,7 +88,7 @@ export const signup = async (req, res) => {
     try {
       await sendEmail({
         to: email,
-        subject: `Welcome to ${companyName || 'DayFlow HRMS'} - Your Account Details`,
+        subject: `Welcome to ${companyName || 'DayFlow Human Resources Management System'} - Your Account Details`,
         html: welcomeEmailTemplate(name, empId, email, password, companyName),
       });
     } catch (emailError) {
@@ -378,7 +378,7 @@ export const sendOTP = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-        subject: 'Password Reset OTP - MERN App',
+        subject: 'Password Reset OTP',
         html: otpEmailTemplate(otp, user.name),
         text: `Your OTP code is: ${otp}. This code will expire in 10 minutes.`,
       });
@@ -494,7 +494,7 @@ export const resetPasswordWithOTP = async (req, res) => {
     try {
       await sendEmail({
         to: user.email,
-        subject: 'Password Reset Successful - MERN App',
+        subject: 'Password Reset Successful',
         html: passwordResetSuccessTemplate(user.name),
         text: `Your password has been successfully reset. You can now log in with your new password.`,
       });
